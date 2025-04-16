@@ -130,6 +130,29 @@
   color: #666;
 }
 
+.table-configurator {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2d784;
+  border-radius: 8px;
+  background-color: #fffef7;
+}
+
+.table-configurator h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.table-configurator label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
 /* Responsive tweaks */
 @media (max-width: 768px) {
   .smart-table {

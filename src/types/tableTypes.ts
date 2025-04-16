@@ -13,7 +13,8 @@
  *                        This can be useful when the filtering logic needs to
  *                        reference a specific property of the data object that
  *                        may differ from the `accessor`.
- */
+ * @property visible - An optional flag indicating if the column is visible or hidden. 
+*/
 export type Column<T> = {
   header: string;
   accessor: keyof T;
@@ -22,6 +23,7 @@ export type Column<T> = {
   frozen?: boolean;
   searchable?: boolean;
   filterKey?: string;
+  visible?: boolean; // Indicates if the column is visible or hidden
 };
 
 export type TableProps<T> = {

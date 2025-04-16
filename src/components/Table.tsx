@@ -9,6 +9,9 @@ export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrent
   const [currentPage, setCurrentPage] = useState(propCurrentPage);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [frozenCols, setFrozenCols] = useState<Set<keyof T>>(() => new Set());
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(columns.map((col) => [String(col.accessor), col.visible ?? true]))
+  );
 
   const sortedData = React.useMemo(() => getSortedData(data, sortConfig), [data, sortConfig]);
   const paginatedData = React.useMemo(() => getPaginatedData(sortedData, currentPage, rowsPerPage), [sortedData, currentPage, rowsPerPage]);
@@ -21,20 +24,29 @@ export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrent
   };
 
   const toggleFrozen = (key: keyof T) => {
-    setFrozenCols(prev => {
+    setFrozenCols((prev) => {
       const newSet = new Set(prev);
       newSet.has(key) ? newSet.delete(key) : newSet.add(key);
       return newSet;
     });
   };
 
+  const toggleColumnVisibility = (key: string) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const updatedColumns = React.useMemo(() => {
-    return [...columns].sort((a, b) => {
-      const aFrozen = frozenCols.has(a.accessor);
-      const bFrozen = frozenCols.has(b.accessor);
-      return aFrozen === bFrozen ? 0 : aFrozen ? -1 : 1;
-    });
-  }, [columns, frozenCols]);
+    return [...columns]
+      .filter((col) => columnVisibility[String(col.accessor)]) // Filter out hidden columns
+      .sort((a, b) => {
+        const aFrozen = frozenCols.has(a.accessor);
+        const bFrozen = frozenCols.has(b.accessor);
+        return aFrozen === bFrozen ? 0 : aFrozen ? -1 : 1;
+      });
+  }, [columns, frozenCols, columnVisibility]);
 
   const pageCount = Math.ceil(data.length / rowsPerPage);
 
@@ -50,6 +62,22 @@ export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrent
 
   return (
     <div className="smart-table-container">
+      <div className="table-configurator">
+        <h4>Table Configurator</h4>
+        {columns.map((col) => (
+          <div key={String(col.accessor)}>
+            <label>
+              <input
+                type="checkbox"
+                checked={columnVisibility[String(col.accessor)]}
+                onChange={() => toggleColumnVisibility(String(col.accessor))}
+              />
+              {col.header}
+            </label>
+          </div>
+        ))}
+      </div>
+
       {data.length === 0 ? (
         <div className="empty-state">
           <p>No data available</p>
@@ -73,10 +101,13 @@ export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrent
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         {col.header}
-                        <span onClick={(e) => {
-                          e.stopPropagation(); // Prevent triggering sort
-                          toggleFrozen(col.accessor);
-                        }} style={{ cursor: "pointer" }}>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering sort
+                            toggleFrozen(col.accessor);
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
                           {isFrozen ? <FaLock /> : <FaLockOpen />}
                         </span>
                         {col.sortable && (
