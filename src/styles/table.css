@@ -76,9 +76,6 @@
 .smart-table .sortable {
   cursor: pointer;
   user-select: none;
-  /* display: flex; */
-  /* align-items: center; */
-  /* gap: 6px; */
 }
 
 /* Arrow styles */
@@ -136,7 +133,6 @@
   }
 
   .smart-table .sortable {
-    /* flex-direction: row;
-    gap: 4px; */
+    font-size: 0.9rem;
   }
 }
