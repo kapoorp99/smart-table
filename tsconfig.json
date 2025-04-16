@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES6",
     "module": "ESNext",
     "declaration": true,
     "jsx": "react-jsx",
@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "emitDeclarationOnly": true,
+    "lib": ["DOM","ES2020"]
   },
   "include": [
     "src"
