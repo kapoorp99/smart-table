@@ -31,4 +31,6 @@ export type TableProps<T> = {
   columns: Column<T>[];
   pageSize?: number;
   currentPage?: number; // The current page number for paginated tables.
+  tableTitle?: string; // Optional title for the table.
+  tableSubtitle?: string; // Optional subtitle for the table.
 };

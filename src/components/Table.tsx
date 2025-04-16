@@ -4,7 +4,7 @@ import { FaLock, FaLockOpen } from "react-icons/fa";
 import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 
-export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrentPage = 1 }: TableProps<T>) {
+export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrentPage = 1, tableTitle, tableSubtitle }: TableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(propCurrentPage);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
@@ -62,6 +62,10 @@ export function Table<T>({ data, columns, pageSize = 5, currentPage: propCurrent
 
   return (
     <div className="smart-table-container">
+      <div className="">
+        {tableTitle && <h3>{tableTitle}</h3>}
+        {tableSubtitle && <h4>{tableSubtitle}</h4>}
+      </div>
       <div className="table-configurator">
         <h4>Table Configurator</h4>
         {columns.map((col) => (
