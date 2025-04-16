@@ -1,26 +1,15 @@
 import React, { useState } from "react";
-import "../styles/table.css"; // Ensure the CSS file is imported
+import "../styles/table.css";
 import { TableProps } from "../types/tableTypes";
+import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 
 export function Table<T>({ data, columns, pageSize = 5 }: TableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const sortedData = React.useMemo(() => {
-    if (!sortConfig) return data;
-    return [...data].sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [data, sortConfig]);
-
-  const paginatedData = React.useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, currentPage, pageSize]);
+  const sortedData = React.useMemo(() => getSortedData(data, sortConfig), [data, sortConfig]);
+  const paginatedData = React.useMemo(() => getPaginatedData(sortedData, currentPage, pageSize), [sortedData, currentPage, pageSize]);
+  
 
   const requestSort = (key: keyof T) => {
     setSortConfig((prev) => {
