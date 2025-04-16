@@ -1,9 +1,11 @@
 export type Column<T> = {
   header: string;
   accessor: keyof T;
+  render?: (value: any, row: T) => React.ReactNode;
   sortable?: boolean;
-  render?: (value: T[keyof T], row: T) => React.ReactNode;
   frozen?: boolean;
+  searchable?: boolean;
+  filterKey?: string;
 };
 
 export type TableProps<T> = {
