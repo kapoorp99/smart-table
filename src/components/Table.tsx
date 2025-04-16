@@ -7,10 +7,11 @@ import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 export function Table<T>({ data, columns, pageSize = 5 }: TableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [frozenCols, setFrozenCols] = useState<Set<keyof T>>(() => new Set());
 
   const sortedData = React.useMemo(() => getSortedData(data, sortConfig), [data, sortConfig]);
-  const paginatedData = React.useMemo(() => getPaginatedData(sortedData, currentPage, pageSize), [sortedData, currentPage, pageSize]);
+  const paginatedData = React.useMemo(() => getPaginatedData(sortedData, currentPage, rowsPerPage), [sortedData, currentPage, rowsPerPage]);
 
   const requestSort = (key: keyof T) => {
     setSortConfig((prev) => {
@@ -35,7 +36,17 @@ export function Table<T>({ data, columns, pageSize = 5 }: TableProps<T>) {
     });
   }, [columns, frozenCols]);
 
-  const pageCount = Math.ceil(data.length / pageSize);
+  const pageCount = Math.ceil(data.length / rowsPerPage);
+
+  const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newRowsPerPage = parseInt(e.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to the first page when rows per page changes
+  };
+
+  const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentPage(parseInt(e.target.value, 10));
+  };
 
   return (
     <div className="smart-table-container">
@@ -105,6 +116,34 @@ export function Table<T>({ data, columns, pageSize = 5 }: TableProps<T>) {
         <button onClick={() => setCurrentPage((p) => Math.min(pageCount, p + 1))} disabled={currentPage === pageCount}>
           Next
         </button>
+        <div>
+          <label htmlFor="page-selector">Go to page:</label>
+          <select
+            id="page-selector"
+            value={currentPage}
+            onChange={handlePageChange}
+          >
+            {Array.from({ length: pageCount }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="rows-per-page-selector">Rows per page:</label>
+          <select
+            id="rows-per-page-selector"
+            value={rowsPerPage}
+            onChange={handleRowsPerPageChange}
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );
