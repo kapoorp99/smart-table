@@ -1,4 +1,4 @@
-.smart-table-container{
+.smart-table-container {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
@@ -15,7 +15,7 @@
 .smart-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 0.95rem;
   background-color: #fffef7;
   color: #333;
@@ -109,7 +109,9 @@
   color: #5a4b00;
   cursor: pointer;
   border-radius: 6px;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .smart-table-pagination button:hover {
@@ -119,6 +121,13 @@
 .smart-table-pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #666;
 }
 
 /* Responsive tweaks */
