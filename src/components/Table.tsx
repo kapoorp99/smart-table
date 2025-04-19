@@ -21,12 +21,14 @@ import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 function SortableRow<T>({
   row,
   columns,
+  frozenCols,
 }: {
   row: T;
   columns: any[];
+  frozenCols: Set<keyof T>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: (row as any).id, // make sure each row has a unique `id`
+    id: (row as any).id,
   });
 
   const style = {
@@ -36,14 +38,25 @@ function SortableRow<T>({
 
   return (
     <tr ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {columns.map((col) => (
-        <td key={String(col.accessor)}>
-          {col.render ? col.render(row[col.accessor], row) : String(row[col.accessor])}
-        </td>
-      ))}
+      {columns.map((col, index) => {
+        const isFrozen = frozenCols.has(col.accessor);
+        return (
+          <td
+            key={String(col.accessor)}
+            className={isFrozen ? "freeze" : ""}
+            style={{
+              left: isFrozen ? `${index * 120}px` : undefined,
+              zIndex: isFrozen ? 2 : 0,
+            }}
+          >
+            {col.render ? col.render(row[col.accessor], row) : String(row[col.accessor])}
+          </td>
+        );
+      })}
     </tr>
   );
 }
+
 
 export function Table<T extends { id: string }>({
   data,
@@ -151,58 +164,12 @@ export function Table<T extends { id: string }>({
         <div className="empty-state"><p>No data available</p></div>
       ) : (
         <div className="">
-            {draggableRows ? (
+          {draggableRows ? (
 
-              <DndContext
-                key={id}
-                id={id}
-                sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <table className="smart-table">
-                  <thead>
-                    <tr>
-                      {updatedColumns.map((col, index) => {
-                        const isFrozen = frozenCols.has(col.accessor);
-                        return (
-                          <th
-                            key={String(col.accessor)}
-                            onClick={col.sortable ? () => requestSort(col.accessor) : undefined}
-                            className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
-                            style={{
-                              left: isFrozen ? `${index * 120}px` : undefined,
-                              zIndex: isFrozen ? 1 : 0,
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              {col.header}
-                              <span
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleFrozen(col.accessor);
-                                }}
-                                style={{ cursor: "pointer" }}
-                              >
-                                {isFrozen ? <FaLock /> : <FaLockOpen />}
-                              </span>
-                            </div>
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <SortableContext
-                      id={`sortable-rows-${id}`}
-                      // children={paginatedData.map(row => row.id)}
-                      items={paginatedData.map(row => row.id)}
-                      strategy={verticalListSortingStrategy}>
-                      {paginatedData.map((row) => (
-                        <SortableRow key={row.id} row={row} columns={updatedColumns} />
-                      ))}
-                    </SortableContext>
-                  </tbody>
-                </table>
-              </DndContext>
-            ) : (
+            <DndContext
+              key={id}
+              id={id}
+              sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <table className="smart-table">
                 <thead>
                   <tr>
@@ -236,28 +203,75 @@ export function Table<T extends { id: string }>({
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.map((row, i) => (
-                    <tr key={i}>
-                      {updatedColumns.map((col, index) => {
-                        const isFrozen = frozenCols.has(col.accessor);
-                        return (
-                          <td
-                            key={String(col.accessor)}
-                            className={isFrozen ? "freeze" : ""}
-                            style={{
-                              left: isFrozen ? `${index * 120}px` : undefined,
-                              zIndex: isFrozen ? 2 : 0,
-                            }}
-                          >
-                            {col.render ? col.render(row[col.accessor], row) : String(row[col.accessor])}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                  <SortableContext
+                    id={`sortable-rows-${id}`}
+                    items={paginatedData.map(row => row.id)}
+                    strategy={verticalListSortingStrategy}>
+                    {paginatedData.map((row) => (
+                      <SortableRow
+                        frozenCols={frozenCols}
+                        key={row.id} row={row} columns={updatedColumns} />
+                    ))}
+                  </SortableContext>
                 </tbody>
               </table>
-            )}
+            </DndContext>
+          ) : (
+            <table className="smart-table">
+              <thead>
+                <tr>
+                  {updatedColumns.map((col, index) => {
+                    const isFrozen = frozenCols.has(col.accessor);
+                    return (
+                      <th
+                        key={String(col.accessor)}
+                        onClick={col.sortable ? () => requestSort(col.accessor) : undefined}
+                        className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
+                        style={{
+                          left: isFrozen ? `${index * 120}px` : undefined,
+                          zIndex: isFrozen ? 1 : 0,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          {col.header}
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFrozen(col.accessor);
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {isFrozen ? <FaLock /> : <FaLockOpen />}
+                          </span>
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.map((row, i) => (
+                  <tr key={i}>
+                    {updatedColumns.map((col, index) => {
+                      const isFrozen = frozenCols.has(col.accessor);
+                      return (
+                        <td
+                          key={String(col.accessor)}
+                          className={isFrozen ? "freeze" : ""}
+                          style={{
+                            left: isFrozen ? `${index * 120}px` : undefined,
+                            zIndex: isFrozen ? 2 : 0,
+                          }}
+                        >
+                          {col.render ? col.render(row[col.accessor], row) : String(row[col.accessor])}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
           <div className="smart-table-pagination">
             <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>Prev</button>
             <span>Page {currentPage} of {Math.ceil(data.length / rowsPerPage)}</span>
