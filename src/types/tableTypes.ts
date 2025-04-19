@@ -33,4 +33,5 @@ export type TableProps<T> = {
   currentPage?: number; // The current page number for paginated tables.
   tableTitle?: string; // Optional title for the table.
   tableSubtitle?: string; // Optional subtitle for the table.
+  draggableRows?: boolean; // Optional flag to enable row drag-and-drop
 };
