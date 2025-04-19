@@ -277,7 +277,7 @@ export function Table<T extends { id: string }>({
             <span>Page {currentPage} of {Math.ceil(data.length / rowsPerPage)}</span>
             <button onClick={() => setCurrentPage((p) => Math.min(Math.ceil(data.length / rowsPerPage), p + 1))} disabled={currentPage === Math.ceil(data.length / rowsPerPage)}>Next</button>
             <div>
-              <label htmlFor="page-selector">Go to page:</label>
+              <label htmlFor="page-selector">Current page:</label>
               <select id="page-selector" value={currentPage} onChange={handlePageChange}>
                 {Array.from({ length: Math.ceil(data.length / rowsPerPage) }, (_, i) => (
                   <option key={i + 1} value={i + 1}>{i + 1}</option>
