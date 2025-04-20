@@ -316,7 +316,6 @@ export function Table<T extends { id: string }>({
                         type="checkbox"
                         onChange={toggleSelectAll}
                         checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowIds.has(row.id))}
-                      // indeterminate={paginatedData.some(row => selectedRowIds.has(row.id)) && !paginatedData.every(row => selectedRowIds.has(row.id))}
                       />
                     </th>
                   )}
