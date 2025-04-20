@@ -22,12 +22,24 @@ function SortableRow<T>({
   row,
   columns,
   frozenCols,
+  selectable = false,
+  isSelected = false,
+  onSelect,
 }: {
   row: T;
   columns: any[];
   frozenCols: Set<keyof T>;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
     id: (row as any).id,
   });
 
@@ -37,7 +49,23 @@ function SortableRow<T>({
   };
 
   return (
-    <tr ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <tr ref={setNodeRef} style={style}>
+      {selectable && (
+        <td>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelect?.();
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </td>
+      )}
+      <td {...attributes} {...listeners} style={{ cursor: "grab" }}>
+        ⠿
+      </td>
       {columns.map((col, index) => {
         const isFrozen = frozenCols.has(col.accessor);
         return (
@@ -49,13 +77,16 @@ function SortableRow<T>({
               zIndex: isFrozen ? 2 : 0,
             }}
           >
-            {col.render ? col.render(row[col.accessor], row) : String(row[col.accessor])}
+            {col.render
+              ? col.render(row[col.accessor], row)
+              : String(row[col.accessor])}
           </td>
         );
       })}
     </tr>
   );
 }
+
 
 
 export function Table<T extends { id: string }>({
@@ -65,7 +96,9 @@ export function Table<T extends { id: string }>({
   currentPage: propCurrentPage = 1,
   tableTitle,
   tableSubtitle,
-  draggableRows = false
+  draggableRows = false,
+  selectableRows = false,
+  onRowSelectChange,
 }: TableProps<T>) {
   const id = useId()
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
@@ -76,6 +109,40 @@ export function Table<T extends { id: string }>({
     () => Object.fromEntries(columns.map((col) => [String(col.accessor), col.visible ?? true]))
   );
   const [rowOrder, setRowOrder] = useState(data.map((row) => row.id)); // assuming each row has a unique `id`
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+
+  const isRowSelected = (id: string) => selectedRowIds.has(id);
+
+  const toggleRowSelection = (id: string) => {
+    setSelectedRowIds((prev) => {
+      const newSet = new Set(prev);
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (paginatedData.every((row) => selectedRowIds.has(row.id))) {
+      setSelectedRowIds((prev) => {
+        const newSet = new Set(prev);
+        paginatedData.forEach((row) => newSet.delete(row.id));
+        return newSet;
+      });
+    } else {
+      setSelectedRowIds((prev) => {
+        const newSet = new Set(prev);
+        paginatedData.forEach((row) => newSet.add(row.id));
+        return newSet;
+      });
+    }
+  };
+
+
+  React.useEffect(() => {
+    onRowSelectChange?.(data.filter((row) => selectedRowIds.has(row.id)));
+  }, [selectedRowIds, data, onRowSelectChange]);
+
+
 
   const sortedData = React.useMemo(() => getSortedData(data, sortConfig), [data, sortConfig]);
 
@@ -173,6 +240,23 @@ export function Table<T extends { id: string }>({
               <table className="smart-table">
                 <thead>
                   <tr>
+                    {selectableRows && (
+                      <th>
+                        <input
+                          type="checkbox"
+                          onChange={toggleSelectAll}
+                          checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowIds.has(row.id))}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = paginatedData.some(row => selectedRowIds.has(row.id)) &&
+                                !paginatedData.every(row => selectedRowIds.has(row.id));
+                            }
+                          }}
+                        // indeterminate={paginatedData.some(row => selectedRowIds.has(row.id)) && !paginatedData.every(row => selectedRowIds.has(row.id))}
+                        />
+                      </th>
+                    )}
+                    <th /> 
                     {updatedColumns.map((col, index) => {
                       const isFrozen = frozenCols.has(col.accessor);
                       return (
@@ -209,8 +293,14 @@ export function Table<T extends { id: string }>({
                     strategy={verticalListSortingStrategy}>
                     {paginatedData.map((row) => (
                       <SortableRow
+                        key={row.id}
+                        row={row}
+                        columns={updatedColumns}
                         frozenCols={frozenCols}
-                        key={row.id} row={row} columns={updatedColumns} />
+                        selectable={selectableRows}
+                        isSelected={isRowSelected(row.id)}
+                        onSelect={() => toggleRowSelection(row.id)}
+                      />
                     ))}
                   </SortableContext>
                 </tbody>
@@ -220,6 +310,16 @@ export function Table<T extends { id: string }>({
             <table className="smart-table">
               <thead>
                 <tr>
+                  {selectableRows && (
+                    <th>
+                      <input
+                        type="checkbox"
+                        onChange={toggleSelectAll}
+                        checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowIds.has(row.id))}
+                      // indeterminate={paginatedData.some(row => selectedRowIds.has(row.id)) && !paginatedData.every(row => selectedRowIds.has(row.id))}
+                      />
+                    </th>
+                  )}
                   {updatedColumns.map((col, index) => {
                     const isFrozen = frozenCols.has(col.accessor);
                     return (
@@ -252,6 +352,16 @@ export function Table<T extends { id: string }>({
               <tbody>
                 {paginatedData.map((row, i) => (
                   <tr key={i}>
+                    {selectableRows && (
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={isRowSelected(row.id)}
+                          onChange={() => toggleRowSelection(row.id)}
+                        />
+                      </td>
+                    )}
+
                     {updatedColumns.map((col, index) => {
                       const isFrozen = frozenCols.has(col.accessor);
                       return (
