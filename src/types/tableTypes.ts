@@ -34,4 +34,6 @@ export type TableProps<T> = {
   tableTitle?: string; // Optional title for the table.
   tableSubtitle?: string; // Optional subtitle for the table.
   draggableRows?: boolean; // Optional flag to enable row drag-and-drop
+  selectableRows?: boolean;
+  onRowSelectChange?: (selectedRows: T[]) => void;
 };
