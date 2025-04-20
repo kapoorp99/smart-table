@@ -9,83 +9,13 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  useSortable,
   arrayMove
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import "../styles/table.css";
 import { FaLock, FaLockOpen } from "react-icons/fa";
 import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData } from "../utils/tableUtils";
-
-function SortableRow<T>({
-  row,
-  columns,
-  frozenCols,
-  selectable = false,
-  isSelected = false,
-  onSelect,
-}: {
-  row: T;
-  columns: any[];
-  frozenCols: Set<keyof T>;
-  selectable?: boolean;
-  isSelected?: boolean;
-  onSelect?: () => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({
-    id: (row as any).id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <tr ref={setNodeRef} style={style}>
-      {selectable && (
-        <td>
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation();
-              onSelect?.();
-            }}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </td>
-      )}
-      <td {...attributes} {...listeners} style={{ cursor: "grab" }}>
-        ⠿
-      </td>
-      {columns.map((col, index) => {
-        const isFrozen = frozenCols.has(col.accessor);
-        return (
-          <td
-            key={String(col.accessor)}
-            className={isFrozen ? "freeze" : ""}
-            style={{
-              left: isFrozen ? `${index * 120}px` : undefined,
-              zIndex: isFrozen ? 2 : 0,
-            }}
-          >
-            {col.render
-              ? col.render(row[col.accessor], row)
-              : String(row[col.accessor])}
-          </td>
-        );
-      })}
-    </tr>
-  );
-}
+import { SortableRow } from "./SortableRow";
 
 
 
