@@ -37,4 +37,7 @@ export type TableProps<T> = {
   selectableRows?: boolean;
   onRowSelectChange?: (selectedRows: T[]) => void;
   stickyHeader?: boolean; // Optional flag to enable sticky header
+  allowExport?: boolean; // Optional flag to enable export functionality
+  exportFileName?: string; // Optional file name for the exported file
+  exportFileType?: 'csv' | 'xlsx'; // Optional file type for the exported file
 };
