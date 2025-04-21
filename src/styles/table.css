@@ -10,6 +10,10 @@
   background-color: #fff;
   border: 2px solid #e2d784;
 }
+.smart-table-main {
+  height: 300px;
+  overflow-y: auto;
+}
 
 /* Root table layout */
 .smart-table {
@@ -39,11 +43,16 @@
 }
 
 /* Sticky header */
-.smart-table thead th.sticky {
+.smart-table thead tr {
+  background-color: #fff;
+}
+
+.smart-table.sticky-header thead th {
   position: sticky;
   top: 0;
-  z-index: 2;
-  background: #fff9dc;
+  z-index: 5;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Frozen (sticky left) columns */
