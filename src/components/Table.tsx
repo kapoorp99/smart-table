@@ -182,7 +182,6 @@ export function Table<T extends { id: string }>({
                                 !paginatedData.every(row => selectedRowIds.has(row.id));
                             }
                           }}
-                        // indeterminate={paginatedData.some(row => selectedRowIds.has(row.id)) && !paginatedData.every(row => selectedRowIds.has(row.id))}
                         />
                       </th>
                     )}
