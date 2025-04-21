@@ -161,14 +161,14 @@ export function Table<T extends { id: string }>({
       {data.length === 0 ? (
         <div className="empty-state"><p>No data available</p></div>
       ) : (
-        <div className="">
+        <div className="smart-table-main">
           {draggableRows ? (
 
             <DndContext
               key={id}
               id={id}
               sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <table className="smart-table">
+              <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
                 <thead>
                   <tr>
                     {selectableRows && (
@@ -186,7 +186,7 @@ export function Table<T extends { id: string }>({
                         />
                       </th>
                     )}
-                    <th /> 
+                    <th />
                     {updatedColumns.map((col, index) => {
                       const isFrozen = frozenCols.has(col.accessor);
                       return (
@@ -196,7 +196,7 @@ export function Table<T extends { id: string }>({
                           className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
                           style={{
                             left: isFrozen ? `${index * 120}px` : undefined,
-                            zIndex: isFrozen ? 1 : 0,
+                            // zIndex: isFrozen ? 1 : 0,
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -237,7 +237,7 @@ export function Table<T extends { id: string }>({
               </table>
             </DndContext>
           ) : (
-            <table className="smart-table">
+            <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
               <thead>
                 <tr>
                   {selectableRows && (
@@ -258,7 +258,7 @@ export function Table<T extends { id: string }>({
                         className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
                         style={{
                           left: isFrozen ? `${index * 120}px` : undefined,
-                          zIndex: isFrozen ? 1 : 0,
+                          // zIndex: isFrozen ? 1 : 0,
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
