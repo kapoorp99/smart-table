@@ -17,7 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0"
+    "react-dom": "^16.0.0 ||^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
     "@swc/core": "^1.11.20",
@@ -32,7 +32,9 @@
     "@dnd-kit/sortable": "^10.0.0",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^16.0.0 ||^17.0.0 || ^18.0.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "papaparse": "^5.5.2",
+    "xlsx": "^0.18.5"
   },
   "exports": {
     ".": {
@@ -52,6 +54,12 @@
       "optional": false
     },
     "@dnd-kit/sortable": {
+      "optional": false
+    },
+    "papaparse": {
+      "optional": false
+    },
+    "xlsx": {
       "optional": false
     }
   }
