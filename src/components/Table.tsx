@@ -16,6 +16,7 @@ import { FaLock, FaLockOpen } from "react-icons/fa";
 import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
+import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
 
 
 
@@ -30,6 +31,9 @@ export function Table<T extends { id: string }>({
   selectableRows = false,
   onRowSelectChange,
   stickyHeader = false,
+  allowExport = false,
+  exportFileName = "exported_data",
+  exportFileType = "csv",
 }: TableProps<T>) {
   const id = useId()
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
@@ -137,6 +141,21 @@ export function Table<T extends { id: string }>({
     }
   };
 
+  const handleExport = () => {
+    const visibleColumns = updatedColumns.map(col => String(col.accessor));
+    const exportData = data.map(row => {
+      const rowData: any = {};
+      visibleColumns.forEach(col => {
+        rowData[col] = row[col];
+      });
+      return rowData;
+    });
+
+    if (exportFileType === "csv") exportToCSV(exportData, visibleColumns, exportFileName);
+    if (exportFileType === "xlsx") exportToXLSX(exportData, visibleColumns, exportFileName);
+  };
+
+
   return (
     <div className="smart-table-container">
       {tableTitle && <h3>{tableTitle}</h3>}
@@ -146,8 +165,12 @@ export function Table<T extends { id: string }>({
         <h4>Table Configurator</h4>
         {columns.map((col) => (
           <div key={String(col.accessor)}>
-            <label>
+            <label
+              htmlFor={`toggle-${String(col.accessor)}`}
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
               <input
+                id={`toggle-${String(col.accessor)}`}
                 type="checkbox"
                 checked={columnVisibility[String(col.accessor)]}
                 onChange={() => toggleColumnVisibility(String(col.accessor))}
@@ -156,6 +179,12 @@ export function Table<T extends { id: string }>({
             </label>
           </div>
         ))}
+
+        {allowExport && (
+          <button onClick={handleExport} className="export-button">
+            Export as {exportFileType.toUpperCase()}
+          </button>
+        )}
       </div>
 
       {data.length === 0 ? (
