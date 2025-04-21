@@ -36,4 +36,5 @@ export type TableProps<T> = {
   draggableRows?: boolean; // Optional flag to enable row drag-and-drop
   selectableRows?: boolean;
   onRowSelectChange?: (selectedRows: T[]) => void;
+  stickyHeader?: boolean; // Optional flag to enable sticky header
 };
