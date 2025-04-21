@@ -29,6 +29,7 @@ export function Table<T extends { id: string }>({
   draggableRows = false,
   selectableRows = false,
   onRowSelectChange,
+  stickyHeader = false,
 }: TableProps<T>) {
   const id = useId()
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
