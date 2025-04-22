@@ -113,6 +113,8 @@ export function Table<T extends { id: string }>({
     });
   };
 
+  const totalPages = Math.ceil(data.length / rowsPerPage);
+
   const toggleColumnVisibility = (key: string) => {
     setColumnVisibility((prev) => ({
       ...prev,
@@ -341,9 +343,14 @@ export function Table<T extends { id: string }>({
             </table>
           )}
           <div className="smart-table-pagination">
-            <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>Prev</button>
-            <span>Page {currentPage} of {Math.ceil(data.length / rowsPerPage)}</span>
-            <button onClick={() => setCurrentPage((p) => Math.min(Math.ceil(data.length / rowsPerPage), p + 1))} disabled={currentPage === Math.ceil(data.length / rowsPerPage)}>Next</button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}>
+              Prev
+            </button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button onClick={() => setCurrentPage((p) => 
+              Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
             <div>
               <label htmlFor="page-selector">Current page:</label>
               <select id="page-selector" value={currentPage} onChange={handlePageChange}>
