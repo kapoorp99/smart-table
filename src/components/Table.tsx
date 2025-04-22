@@ -227,7 +227,6 @@ export function Table<T extends { id: string }>({
                           className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
                           style={{
                             left: isFrozen ? `${index * 120}px` : undefined,
-                            // zIndex: isFrozen ? 1 : 0,
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -289,7 +288,6 @@ export function Table<T extends { id: string }>({
                         className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
                         style={{
                           left: isFrozen ? `${index * 120}px` : undefined,
-                          // zIndex: isFrozen ? 1 : 0,
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
