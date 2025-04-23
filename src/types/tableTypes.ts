@@ -40,4 +40,6 @@ export type TableProps<T> = {
   allowExport?: boolean; // Optional flag to enable export functionality
   exportFileName?: string; // Optional file name for the exported file
   exportFileType?: 'csv' | 'xlsx'; // Optional file type for the exported file
+  enableChatWithTable?: boolean; // Optional flag to enable chat with table data
+  openaiApiKey?: string; // OpenAI API key for chat functionality
 };
