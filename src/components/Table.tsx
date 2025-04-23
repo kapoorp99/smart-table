@@ -17,6 +17,7 @@ import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
 import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
+import ChatBox from "./ChatBox";
 
 
 
@@ -34,6 +35,8 @@ export function Table<T extends { id: string }>({
   allowExport = false,
   exportFileName = "exported_data",
   exportFileType = "csv",
+  enableChatWithTable = false,
+  openaiApiKey = "",
 }: TableProps<T>) {
   const id = useId()
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
@@ -347,7 +350,7 @@ export function Table<T extends { id: string }>({
               Prev
             </button>
             <span>Page {currentPage} of {totalPages}</span>
-            <button onClick={() => setCurrentPage((p) => 
+            <button onClick={() => setCurrentPage((p) =>
               Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
             <div>
               <label htmlFor="page-selector">Current page:</label>
@@ -367,6 +370,12 @@ export function Table<T extends { id: string }>({
             </div>
           </div>
         </div>
+      )}
+      {enableChatWithTable && (
+        <ChatBox
+          data={data}
+          apiKey={openaiApiKey}
+        />
       )}
     </div>
   );
