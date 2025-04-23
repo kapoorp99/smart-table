@@ -136,6 +136,7 @@ export function Table<T extends { id: string }>({
   };
 
   const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortConfig(null); // Reset sorting when rows per page changes
     const newRowsPerPage = parseInt(e.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1);
@@ -368,34 +369,34 @@ export function Table<T extends { id: string }>({
               </tbody>
             </table>
           )}
-          <div className="smart-table-pagination">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}>
-              Prev
-            </button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <button onClick={() => setCurrentPage((p) =>
-              Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
-            <div>
-              <label htmlFor="page-selector">Current page:</label>
-              <select id="page-selector" value={currentPage} onChange={handlePageChange}>
-                {Array.from({ length: Math.ceil(data.length / rowsPerPage) }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>{i + 1}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="rows-per-page-selector">Rows per page:</label>
-              <select id="rows-per-page-selector" value={rowsPerPage} onChange={handleRowsPerPageChange}>
-                {[5, 10, 20, 50].map((size) => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-            </div>
-          </div>
         </div>
       )}
+      <div className="smart-table-pagination">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage === 1}>
+          Prev
+        </button>
+        <span>Page {currentPage} of {totalPages}</span>
+        <button onClick={() => setCurrentPage((p) =>
+          Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+        <div>
+          <label htmlFor="page-selector">Current page:</label>
+          <select id="page-selector" value={currentPage} onChange={handlePageChange}>
+            {Array.from({ length: Math.ceil(data.length / rowsPerPage) }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{i + 1}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="rows-per-page-selector">Rows per page:</label>
+          <select id="rows-per-page-selector" value={rowsPerPage} onChange={handleRowsPerPageChange}>
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       {enableChatWithTable && (
         <ChatBox
           data={data}
