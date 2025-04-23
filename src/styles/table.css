@@ -175,6 +175,16 @@
   background-color: #0056b3;
 }
 
+.smart-table-chat-box {
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: #fffef7;
+  border-radius: 8px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  padding: 1rem;
+}
+
 
 /* Responsive tweaks */
 @media (max-width: 768px) {

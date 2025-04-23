@@ -31,7 +31,7 @@ const ChatBox = ({ data, apiKey, aiProvider, onChat }: Props) => {
     };
 
     return (
-        <div className="chat-box">
+        <div className="smart-table-chat-box">
             <textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ask about this table..." />
             <button onClick={handleSubmit}>Ask</button>
             <div className="response">{response}</div>
