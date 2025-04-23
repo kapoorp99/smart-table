@@ -37,6 +37,9 @@ export function Table<T extends { id: string }>({
   exportFileType = "csv",
   enableChatWithTable = false,
   openaiApiKey = "",
+  geminiApiKey = "",
+  aiProvider = "gemini",
+  onChat
 }: TableProps<T>) {
   const id = useId()
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
@@ -374,7 +377,11 @@ export function Table<T extends { id: string }>({
       {enableChatWithTable && (
         <ChatBox
           data={data}
-          apiKey={openaiApiKey}
+          aiProvider={aiProvider}
+          apiKey={aiProvider === "openai" ? { openaiApiKey } : {
+            geminiApiKey
+          }}
+          onChat={onChat}
         />
       )}
     </div>
