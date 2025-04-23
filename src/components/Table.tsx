@@ -230,7 +230,7 @@ export function Table<T extends { id: string }>({
                         <th
                           key={String(col.accessor)}
                           onClick={col.sortable ? () => requestSort(col.accessor) : undefined}
-                          className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
+                          className={`${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
                           style={{
                             left: isFrozen ? `${index * 120}px` : undefined,
                           }}
@@ -291,7 +291,7 @@ export function Table<T extends { id: string }>({
                       <th
                         key={String(col.accessor)}
                         onClick={col.sortable ? () => requestSort(col.accessor) : undefined}
-                        className={`sticky ${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
+                        className={`${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
                         style={{
                           left: isFrozen ? `${index * 120}px` : undefined,
                         }}
