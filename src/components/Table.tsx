@@ -1,4 +1,6 @@
 import React, { useId, useState } from "react";
+import { useTranslation } from 'react-i18next';
+
 import {
   DndContext,
   closestCenter,
@@ -18,6 +20,8 @@ import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
 import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
 import ChatBox from "./ChatBox";
+import LanguageSwitcher from "./LanguageSwitcher";
+import i18n from "../utils/i18n";
 
 
 
@@ -39,8 +43,11 @@ export function Table<T extends { id: string }>({
   openaiApiKey = "",
   geminiApiKey = "",
   aiProvider = "gemini",
-  onChat
+  onChat,
+  showLanguageSwitcher = false,
+  language = "en",
 }: TableProps<T>) {
+  const { t } = useTranslation();
   const id = useId()
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(propCurrentPage);
@@ -80,6 +87,11 @@ export function Table<T extends { id: string }>({
     }
   };
 
+  React.useEffect(() => {
+    if (language) {
+      i18n.changeLanguage(language);
+    }
+  }, [language]);
 
   React.useEffect(() => {
     onRowSelectChange?.(data.filter((row) => selectedRowIds.has(row.id)));
@@ -187,6 +199,11 @@ export function Table<T extends { id: string }>({
 
       <div className="table-configurator">
         <h4>Table Configurator</h4>
+        <div>
+          {showLanguageSwitcher && (
+            <LanguageSwitcher />
+          )}
+        </div>
         {columns.map((col) => (
           <div key={String(col.accessor)}>
             <label
@@ -206,13 +223,17 @@ export function Table<T extends { id: string }>({
 
         {allowExport && (
           <button onClick={handleExport} className="export-button">
-            Export as {exportFileType.toUpperCase()}
+            {t('table.export')} as {exportFileType.toUpperCase()}
           </button>
         )}
       </div>
 
       {data.length === 0 ? (
-        <div className="empty-state"><p>No data available</p></div>
+        <div className="empty-state">
+          <p>
+            {t('table.noData')}
+          </p>
+        </div>
       ) : (
         <div className="smart-table-main">
           {draggableRows ? (
