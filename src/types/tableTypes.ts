@@ -42,4 +42,5 @@ export type TableProps<T> = {
   exportFileType?: 'csv' | 'xlsx'; // Optional file type for the exported file
   enableChatWithTable?: boolean; // Optional flag to enable chat with table data
   openaiApiKey?: string; // OpenAI API key for chat functionality
+  aiProvider: "gemini" | "openai"; // AI provider for chat functionality
 };
