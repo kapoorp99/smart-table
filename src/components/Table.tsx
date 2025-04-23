@@ -12,7 +12,7 @@ import {
   arrayMove
 } from "@dnd-kit/sortable";
 import "../styles/table.css";
-import { FaLock, FaLockOpen } from "react-icons/fa";
+import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
@@ -91,10 +91,15 @@ export function Table<T extends { id: string }>({
 
   const orderedData = rowOrder.map((id) => sortedData.find((row) => row.id === id)!);
 
-  const paginatedData = React.useMemo(
+  const currentPageData = React.useMemo(
     () => getPaginatedData(orderedData, currentPage, rowsPerPage),
     [orderedData, currentPage, rowsPerPage]
   );
+  // Now apply sort only on current page data
+  const paginatedData = React.useMemo(() => {
+    if (draggableRows || !sortConfig) return currentPageData;
+    return getSortedData(currentPageData, sortConfig);
+  }, [currentPageData, sortConfig, draggableRows]);
 
   const updatedColumns = React.useMemo(() => {
     return [...columns]
@@ -166,6 +171,14 @@ export function Table<T extends { id: string }>({
   };
 
 
+  // Reset sorting when draggableRows is toggled
+  React.useEffect(() => {
+    if (draggableRows && sortConfig) {
+      setSortConfig(null); // clear sort config when dragging enabled
+    }
+  }, [draggableRows]);
+
+
   return (
     <div className="smart-table-container">
       {tableTitle && <h3>{tableTitle}</h3>}
@@ -231,8 +244,8 @@ export function Table<T extends { id: string }>({
                       return (
                         <th
                           key={String(col.accessor)}
-                          onClick={col.sortable ? () => requestSort(col.accessor) : undefined}
-                          className={`${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
+                          onClick={(!draggableRows && col.sortable) ? () => requestSort(col.accessor) : undefined}
+                          className={`${isFrozen ? "freeze" : ""} ${!draggableRows && col.sortable ? "sortable" : ""}`}
                           style={{
                             left: isFrozen ? `${index * 120}px` : undefined,
                           }}
@@ -292,14 +305,21 @@ export function Table<T extends { id: string }>({
                     return (
                       <th
                         key={String(col.accessor)}
-                        onClick={col.sortable ? () => requestSort(col.accessor) : undefined}
-                        className={`${isFrozen ? "freeze" : ""} ${col.sortable ? "sortable" : ""}`}
+                        onClick={(!draggableRows && col.sortable) ? () => requestSort(col.accessor) : undefined}
+                        className={`${isFrozen ? "freeze" : ""} ${!draggableRows && col.sortable ? "sortable" : ""}`}
                         style={{
                           left: isFrozen ? `${index * 120}px` : undefined,
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           {col.header}
+                          {!draggableRows && col.sortable && (
+                            sortConfig ? (
+                              <span style={{ cursor: "pointer" }} onClick={() => requestSort(col.accessor)}>
+                                {sortConfig?.key === col.accessor && (sortConfig.direction === "asc" ? <FaArrowDown /> : <FaArrowUp />)}
+                              </span>
+                            ) : <span style={{ cursor: "pointer" }} onClick={() => requestSort(col.accessor)}><FaSort /></span>
+                          )}
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
