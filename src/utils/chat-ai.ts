@@ -30,7 +30,7 @@ export async function chatWithOpenAI(apiKey: string, tableData: any[], userQuery
 export async function chatWithGemini(apiKey: string, tableData: any[], userQuery: string) {
     const prompt = `You are a data assistant. Given this table: ${JSON.stringify(tableData.slice(0, 50))}, answer this: ${userQuery}`;
 
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey, {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
