@@ -1,0 +1,27 @@
+// utils/chatWithOpenAI.ts
+export async function chatWithOpenAI(apiKey: string, tableData: any[], userQuery: string) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: "You're a data analyst helping a user understand their table data.",
+          },
+          {
+            role: "user",
+            content: `Here is the data: ${JSON.stringify(tableData.slice(0, 50))}\n\nUser question: ${userQuery}`,
+          },
+        ],
+      }),
+    });
+  
+    const data = await response.json();
+    return data.choices[0]?.message?.content;
+  }
+  
