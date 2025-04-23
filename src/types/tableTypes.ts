@@ -46,6 +46,6 @@ export type TableProps<T> = {
   aiProvider: "gemini" | "openai"; // AI provider for chat functionality
   onChat?: (data: T[], query: string) => Promise<string>; // Optional function for custom chat logic
   showLanguageSwitcher?: boolean; // Optional flag to show language switcher
-  language?: string; // Optional language for the table
-  
+  language: string; // Optional language for the table
+
 };

@@ -45,7 +45,7 @@ export function Table<T extends { id: string }>({
   aiProvider = "gemini",
   onChat,
   showLanguageSwitcher = false,
-  language = "en",
+  language,
 }: TableProps<T>) {
   const { t } = useTranslation();
   const id = useId()
