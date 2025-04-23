@@ -45,7 +45,9 @@ export function Table<T extends { id: string }>({
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(propCurrentPage);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
-  const [frozenCols, setFrozenCols] = useState<Set<keyof T>>(() => new Set());
+  const [frozenCols, setFrozenCols] = useState<Set<keyof T>>(() =>
+    new Set(columns.filter((col) => col.frozen).map((col) => col.accessor))
+  );
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
     () => Object.fromEntries(columns.map((col) => [String(col.accessor), col.visible ?? true]))
   );
