@@ -16,7 +16,7 @@ import {
 import "../styles/table.css";
 import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { TableProps } from "../types/tableTypes";
-import { getPaginatedData, getSortedData } from "../utils/tableUtils";
+import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
 import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
 import ChatBox from "./ChatBox";
@@ -52,6 +52,7 @@ export function Table<T extends { id: string }>({
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(propCurrentPage);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
+  const [groupBy, setGroupBy] = useState<string | null>(null);
   const [frozenCols, setFrozenCols] = useState<Set<keyof T>>(() =>
     new Set(columns.filter((col) => col.frozen).map((col) => col.accessor))
   );
@@ -183,6 +184,12 @@ export function Table<T extends { id: string }>({
     if (exportFileType === "xlsx") exportToXLSX(exportData, visibleColumns, exportFileName);
   };
 
+  const groupedData = React.useMemo(() => {
+    if (groupBy) {
+      return groupData(paginatedData, groupBy as keyof T);
+    }
+    return null;
+  }, [paginatedData, groupBy]);
 
   // Reset sorting when draggableRows is toggled
   React.useEffect(() => {
@@ -199,6 +206,21 @@ export function Table<T extends { id: string }>({
 
       <div className="table-configurator">
         <h4>Table Configurator</h4>
+        <div>
+          <label htmlFor="group-by-selector">Group By:</label>
+          <select
+            id="group-by-selector"
+            value={groupBy || ""}
+            onChange={(e) => setGroupBy(e.target.value || null)}
+          >
+            <option value="">None</option>
+            {columns.map((col) => (
+              <option key={String(col.accessor)} value={String(col.accessor)}>
+                {col.header}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           {showLanguageSwitcher && (
             <LanguageSwitcher />
@@ -358,35 +380,76 @@ export function Table<T extends { id: string }>({
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.map((row, i) => (
-                  <tr key={i}>
-                    {selectableRows && (
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={isRowSelected(row.id)}
-                          onChange={() => toggleRowSelection(row.id)}
-                        />
-                      </td>
-                    )}
-
-                    {updatedColumns.map((col, index) => {
-                      const isFrozen = frozenCols.has(col.accessor);
-                      return (
-                        <td
-                          key={String(col.accessor)}
-                          className={isFrozen ? "freeze" : ""}
-                          style={{
-                            left: isFrozen ? `${index * 120}px` : undefined,
-                            zIndex: isFrozen ? 2 : 0,
-                          }}
-                        >
-                          {col.render ? col.render(row[col.accessor], row) : String(row[col.accessor])}
+                {groupedData
+                  ? Object.entries(groupedData).map(([group, rows]) => (
+                    <React.Fragment key={group}>
+                      <tr>
+                        <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
+                          <strong>{group}</strong>
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                      </tr>
+                      {rows.map((row) => (
+                        <tr key={row.id}>
+                          {selectableRows && (
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={isRowSelected(row.id)}
+                                onChange={() => toggleRowSelection(row.id)}
+                              />
+                            </td>
+                          )}
+                          {updatedColumns.map((col, index) => {
+                            const isFrozen = frozenCols.has(col.accessor);
+                            return (
+                              <td
+                                key={String(col.accessor)}
+                                className={isFrozen ? "freeze" : ""}
+                                style={{
+                                  left: isFrozen ? `${index * 120}px` : undefined,
+                                  zIndex: isFrozen ? 2 : 0,
+                                }}
+                              >
+                                {col.render
+                                  ? col.render(row[col.accessor], row)
+                                  : String(row[col.accessor])}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))
+                  : paginatedData.map((row) => (
+                    <tr key={row.id}>
+                      {selectableRows && (
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={isRowSelected(row.id)}
+                            onChange={() => toggleRowSelection(row.id)}
+                          />
+                        </td>
+                      )}
+                      {updatedColumns.map((col, index) => {
+                        const isFrozen = frozenCols.has(col.accessor);
+                        return (
+                          <td
+                            key={String(col.accessor)}
+                            className={isFrozen ? "freeze" : ""}
+                            style={{
+                              left: isFrozen ? `${index * 120}px` : undefined,
+                              zIndex: isFrozen ? 2 : 0,
+                            }}
+                          >
+                            {col.render
+                              ? col.render(row[col.accessor], row)
+                              : String(row[col.accessor])}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           )}
