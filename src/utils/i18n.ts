@@ -34,6 +34,28 @@ i18n
           },
         },
       },
+      es: {
+        translation: {
+          table: {
+            search: 'Buscar',
+            rowsPerPage: 'Filas por página',
+            noData: 'No hay datos disponibles',
+            export: 'Exportar',
+            selectAll: 'Seleccionar todo',
+          },
+        },
+      },
+      de: {
+        translation: {
+          table: {
+            search: 'Suche',
+            rowsPerPage: 'Zeilen pro Seite',
+            noData: 'Keine Daten verfügbar',
+            export: 'Exportieren',
+            selectAll: 'Alle auswählen',
+          },
+        },
+      },
     },
   });
 
