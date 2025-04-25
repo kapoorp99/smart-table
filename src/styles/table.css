@@ -176,13 +176,28 @@
 }
 
 .smart-table-chat-box {
-  width: 300px;
+  width: 400px;
   max-height: 400px;
   overflow-y: auto;
   background-color: #fffef7;
   border-radius: 8px;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
   padding: 1rem;
+}
+
+.smart-table-response{
+  background-color: #fff6cc;
+  padding: 0.5rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  max-width: 80%;
+  word-wrap: break-word;
+  position: relative;
+  display: inline-block;
+  margin-left: 10px;
+  margin-right: 10px;
+  font-size: 0.9rem;
+  color: #333;
 }
 
 
