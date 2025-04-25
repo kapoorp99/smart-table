@@ -24,6 +24,7 @@ export type Column<T> = {
   searchable?: boolean;
   filterKey?: string;
   visible?: boolean; // Indicates if the column is visible or hidden
+  filterable?: boolean; // Indicates if the column is filterable
 };
 
 export type TableProps<T> = {
@@ -47,5 +48,4 @@ export type TableProps<T> = {
   onChat?: (data: T[], query: string) => Promise<string>; // Optional function for custom chat logic
   showLanguageSwitcher?: boolean; // Optional flag to show language switcher
   language: string; // Optional language for the table
-
 };
