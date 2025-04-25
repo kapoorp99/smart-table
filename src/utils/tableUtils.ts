@@ -16,3 +16,12 @@ export function getPaginatedData<T>(data: T[], currentPage: number, pageSize: nu
   const start = (currentPage - 1) * pageSize;
   return data.slice(start, start + pageSize);
 }
+
+export function groupData<T>(data: T[], groupByKey: keyof T): Record<string, T[]> {
+  return data.reduce((acc, item) => {
+    const key = item[groupByKey] as unknown as string;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}
