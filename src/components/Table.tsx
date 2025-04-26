@@ -1,6 +1,5 @@
-import React, { useId, useState } from "react";
+import React, { useId, useState, useMemo } from "react";
 import { useTranslation } from 'react-i18next';
-
 import {
   DndContext,
   closestCenter,
@@ -14,7 +13,7 @@ import {
   arrayMove
 } from "@dnd-kit/sortable";
 import "../styles/table.css";
-import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown } from "react-icons/fa";
+import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter } from "react-icons/fa";
 import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
@@ -22,8 +21,6 @@ import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
 import ChatBox from "./ChatBox";
 import LanguageSwitcher from "./LanguageSwitcher";
 import i18n from "../utils/i18n";
-
-
 
 export function Table<T extends { id: string }>({
   data,
@@ -48,7 +45,7 @@ export function Table<T extends { id: string }>({
   language,
 }: TableProps<T>) {
   const { t } = useTranslation();
-  const id = useId()
+  const id = useId();
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
   const [currentPage, setCurrentPage] = useState(propCurrentPage);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
@@ -59,8 +56,10 @@ export function Table<T extends { id: string }>({
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
     () => Object.fromEntries(columns.map((col) => [String(col.accessor), col.visible ?? true]))
   );
-  const [rowOrder, setRowOrder] = useState(data.map((row) => row.id)); // assuming each row has a unique `id`
+  const [rowOrder, setRowOrder] = useState(data.map((row) => row.id));
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
 
   const isRowSelected = (id: string) => selectedRowIds.has(id);
 
@@ -98,17 +97,31 @@ export function Table<T extends { id: string }>({
     onRowSelectChange?.(data.filter((row) => selectedRowIds.has(row.id)));
   }, [selectedRowIds, data, onRowSelectChange]);
 
+  // Filter data based on filterValues
+  const filteredData = useMemo(() => {
+    if (!Object.values(filterValues).some((val) => val.trim() !== "")) return data;
+    return data.filter((row) =>
+      Object.entries(filterValues).every(([key, value]) => {
+        if (!value.trim()) return true;
+        const column = columns.find((col) => String(col.accessor) === key);
+        if (!column || !column.filterable) return true;
+        const cellValue = String(row[key as keyof T]).toLowerCase();
+        return cellValue.includes(value.toLowerCase());
+      })
+    );
+  }, [data, filterValues, columns]);
 
+  const sortedData = React.useMemo(() => getSortedData(filteredData, sortConfig), [filteredData, sortConfig]);
 
-  const sortedData = React.useMemo(() => getSortedData(data, sortConfig), [data, sortConfig]);
-
-  const orderedData = rowOrder.map((id) => sortedData.find((row) => row.id === id)!);
+  const orderedData = rowOrder
+    .filter((id) => sortedData.find((row) => row.id === id)) // Ensure only valid IDs
+    .map((id) => sortedData.find((row) => row.id === id)!);
 
   const currentPageData = React.useMemo(
     () => getPaginatedData(orderedData, currentPage, rowsPerPage),
     [orderedData, currentPage, rowsPerPage]
   );
-  // Now apply sort only on current page data
+
   const paginatedData = React.useMemo(() => {
     if (draggableRows || !sortConfig) return currentPageData;
     return getSortedData(currentPageData, sortConfig);
@@ -139,7 +152,7 @@ export function Table<T extends { id: string }>({
     });
   };
 
-  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
   const toggleColumnVisibility = (key: string) => {
     setColumnVisibility((prev) => ({
@@ -149,7 +162,7 @@ export function Table<T extends { id: string }>({
   };
 
   const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortConfig(null); // Reset sorting when rows per page changes
+    setSortConfig(null);
     const newRowsPerPage = parseInt(e.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1);
@@ -172,7 +185,7 @@ export function Table<T extends { id: string }>({
 
   const handleExport = () => {
     const visibleColumns = updatedColumns.map(col => String(col.accessor));
-    const exportData = data.map(row => {
+    const exportData = filteredData.map(row => {
       const rowData: any = {};
       visibleColumns.forEach(col => {
         rowData[col] = row[col];
@@ -191,13 +204,24 @@ export function Table<T extends { id: string }>({
     return null;
   }, [paginatedData, groupBy]);
 
-  // Reset sorting when draggableRows is toggled
+  const handleFilterChange = (key: string, value: string) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  const clearFilters = () => {
+    setFilterValues({});
+    setCurrentPage(1);
+  };
+
   React.useEffect(() => {
     if (draggableRows && sortConfig) {
-      setSortConfig(null); // clear sort config when dragging enabled
+      setSortConfig(null);
     }
   }, [draggableRows]);
-
 
   return (
     <div className="smart-table-container">
@@ -206,7 +230,7 @@ export function Table<T extends { id: string }>({
 
       <div className="table-configurator">
         <h4>Table Configurator</h4>
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <label htmlFor="group-by-selector">Group By:</label>
           <select
             id="group-by-selector"
@@ -222,10 +246,40 @@ export function Table<T extends { id: string }>({
           </select>
         </div>
         <div>
-          {showLanguageSwitcher && (
-            <LanguageSwitcher />
-          )}
+          {showLanguageSwitcher && <LanguageSwitcher />}
         </div>
+        <div>
+          <button
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            className="filter-button"
+          >
+            <FaFilter /> {t('table.filters')}
+          </button>
+        </div>
+        {showFilterPanel && (
+          <div className="filter-panel" style={{ marginTop: "10px", padding: "10px", border: "1px solid #ccc" }}>
+            <h5>Filters</h5>
+            {columns
+              .filter((col) => col.filterable)
+              .map((col) => (
+                <div key={String(col.accessor)} style={{ marginBottom: "10px" }}>
+                  <label htmlFor={`filter-${String(col.accessor)}`}>{col.header}</label>
+                  <input
+                    id={`filter-${String(col.accessor)}`}
+                    type="text"
+                    value={filterValues[String(col.accessor)] || ""}
+                    onChange={(e) => handleFilterChange(String(col.accessor), e.target.value)}
+                    placeholder={`Filter by ${col.header}`}
+                    style={{ marginLeft: "10px", padding: "5px" }}
+                  />
+                </div>
+              ))}
+            <button onClick={clearFilters} style={{ marginTop: "10px" }} className="clear-filter-button">
+              {t('table.clearFilters')}
+            </button>
+          </div>
+        )}
         {columns.map((col) => (
           <div key={String(col.accessor)}>
             <label
@@ -242,7 +296,6 @@ export function Table<T extends { id: string }>({
             </label>
           </div>
         ))}
-
         {allowExport && (
           <button onClick={handleExport} className="export-button">
             {t('table.export')} as {exportFileType.toUpperCase()}
@@ -250,20 +303,20 @@ export function Table<T extends { id: string }>({
         )}
       </div>
 
-      {data.length === 0 ? (
+      {filteredData.length === 0 ? (
         <div className="empty-state">
-          <p>
-            {t('table.noData')}
-          </p>
+          <p>{t('table.noData')}</p>
         </div>
       ) : (
         <div className="smart-table-main">
           {draggableRows ? (
-
             <DndContext
               key={id}
               id={id}
-              sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
               <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
                 <thead>
                   <tr>
@@ -272,11 +325,12 @@ export function Table<T extends { id: string }>({
                         <input
                           type="checkbox"
                           onChange={toggleSelectAll}
-                          checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowIds.has(row.id))}
+                          checked={paginatedData.length > 0 && paginatedData.every((row) => selectedRowIds.has(row.id))}
                           ref={(el) => {
                             if (el) {
-                              el.indeterminate = paginatedData.some(row => selectedRowIds.has(row.id)) &&
-                                !paginatedData.every(row => selectedRowIds.has(row.id));
+                              el.indeterminate =
+                                paginatedData.some((row) => selectedRowIds.has(row.id)) &&
+                                !paginatedData.every((row) => selectedRowIds.has(row.id));
                             }
                           }}
                         />
@@ -314,8 +368,9 @@ export function Table<T extends { id: string }>({
                 <tbody>
                   <SortableContext
                     id={`sortable-rows-${id}`}
-                    items={paginatedData.map(row => row.id)}
-                    strategy={verticalListSortingStrategy}>
+                    items={paginatedData.map((row) => row.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     {paginatedData.map((row) => (
                       <SortableRow
                         key={row.id}
@@ -340,7 +395,7 @@ export function Table<T extends { id: string }>({
                       <input
                         type="checkbox"
                         onChange={toggleSelectAll}
-                        checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowIds.has(row.id))}
+                        checked={paginatedData.length > 0 && paginatedData.every((row) => selectedRowIds.has(row.id))}
                       />
                     </th>
                   )}
@@ -360,9 +415,14 @@ export function Table<T extends { id: string }>({
                           {!draggableRows && col.sortable && (
                             sortConfig ? (
                               <span style={{ cursor: "pointer" }} onClick={() => requestSort(col.accessor)}>
-                                {sortConfig?.key === col.accessor && (sortConfig.direction === "asc" ? <FaArrowDown /> : <FaArrowUp />)}
+                                {sortConfig?.key === col.accessor &&
+                                  (sortConfig.direction === "asc" ? <FaArrowDown /> : <FaArrowUp />)}
                               </span>
-                            ) : <span style={{ cursor: "pointer" }} onClick={() => requestSort(col.accessor)}><FaSort /></span>
+                            ) : (
+                              <span style={{ cursor: "pointer" }} onClick={() => requestSort(col.accessor)}>
+                                <FaSort />
+                              </span>
+                            )
                           )}
                           <span
                             onClick={(e) => {
@@ -382,74 +442,74 @@ export function Table<T extends { id: string }>({
               <tbody>
                 {groupedData
                   ? Object.entries(groupedData).map(([group, rows]) => (
-                    <React.Fragment key={group}>
-                      <tr>
-                        <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
-                          <strong>{group}</strong>
-                        </td>
-                      </tr>
-                      {rows.map((row) => (
-                        <tr key={row.id}>
-                          {selectableRows && (
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={isRowSelected(row.id)}
-                                onChange={() => toggleRowSelection(row.id)}
-                              />
-                            </td>
-                          )}
-                          {updatedColumns.map((col, index) => {
-                            const isFrozen = frozenCols.has(col.accessor);
-                            return (
-                              <td
-                                key={String(col.accessor)}
-                                className={isFrozen ? "freeze" : ""}
-                                style={{
-                                  left: isFrozen ? `${index * 120}px` : undefined,
-                                  zIndex: isFrozen ? 2 : 0,
-                                }}
-                              >
-                                {col.render
-                                  ? col.render(row[col.accessor], row)
-                                  : String(row[col.accessor])}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  ))
-                  : paginatedData.map((row) => (
-                    <tr key={row.id}>
-                      {selectableRows && (
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={isRowSelected(row.id)}
-                            onChange={() => toggleRowSelection(row.id)}
-                          />
-                        </td>
-                      )}
-                      {updatedColumns.map((col, index) => {
-                        const isFrozen = frozenCols.has(col.accessor);
-                        return (
-                          <td
-                            key={String(col.accessor)}
-                            className={isFrozen ? "freeze" : ""}
-                            style={{
-                              left: isFrozen ? `${index * 120}px` : undefined,
-                              zIndex: isFrozen ? 2 : 0,
-                            }}
-                          >
-                            {col.render
-                              ? col.render(row[col.accessor], row)
-                              : String(row[col.accessor])}
+                      <React.Fragment key={group}>
+                        <tr>
+                          <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
+                            <strong>{group}</strong>
                           </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                        </tr>
+                        {rows.map((row) => (
+                          <tr key={row.id}>
+                            {selectableRows && (
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={isRowSelected(row.id)}
+                                  onChange={() => toggleRowSelection(row.id)}
+                                />
+                              </td>
+                            )}
+                            {updatedColumns.map((col, index) => {
+                              const isFrozen = frozenCols.has(col.accessor);
+                              return (
+                                <td
+                                  key={String(col.accessor)}
+                                  className={isFrozen ? "freeze" : ""}
+                                  style={{
+                                    left: isFrozen ? `${index * 120}px` : undefined,
+                                    zIndex: isFrozen ? 2 : 0,
+                                  }}
+                                >
+                                  {col.render
+                                    ? col.render(row[col.accessor], row)
+                                    : String(row[col.accessor])}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))
+                  : paginatedData.map((row) => (
+                      <tr key={row.id}>
+                        {selectableRows && (
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={isRowSelected(row.id)}
+                              onChange={() => toggleRowSelection(row.id)}
+                            />
+                          </td>
+                        )}
+                        {updatedColumns.map((col, index) => {
+                          const isFrozen = frozenCols.has(col.accessor);
+                          return (
+                            <td
+                              key={String(col.accessor)}
+                              className={isFrozen ? "freeze" : ""}
+                              style={{
+                                left: isFrozen ? `${index * 120}px` : undefined,
+                                zIndex: isFrozen ? 2 : 0,
+                              }}
+                            >
+                              {col.render
+                                ? col.render(row[col.accessor], row)
+                                : String(row[col.accessor])}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
               </tbody>
             </table>
           )}
@@ -458,17 +518,26 @@ export function Table<T extends { id: string }>({
       <div className="smart-table-pagination">
         <button
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={currentPage === 1}>
+          disabled={currentPage === 1}
+        >
           Prev
         </button>
-        <span>Page {currentPage} of {totalPages}</span>
-        <button onClick={() => setCurrentPage((p) =>
-          Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
         <div>
           <label htmlFor="page-selector">Current page:</label>
           <select id="page-selector" value={currentPage} onChange={handlePageChange}>
-            {Array.from({ length: Math.ceil(data.length / rowsPerPage) }, (_, i) => (
-              <option key={i + 1} value={i + 1}>{i + 1}</option>
+            {Array.from({ length: Math.ceil(filteredData.length / rowsPerPage) }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
             ))}
           </select>
         </div>
@@ -476,18 +545,18 @@ export function Table<T extends { id: string }>({
           <label htmlFor="rows-per-page-selector">Rows per page:</label>
           <select id="rows-per-page-selector" value={rowsPerPage} onChange={handleRowsPerPageChange}>
             {[5, 10, 20, 50].map((size) => (
-              <option key={size} value={size}>{size}</option>
+              <option key={size} value={size}>
+                {size}
+              </option>
             ))}
           </select>
         </div>
       </div>
       {enableChatWithTable && (
         <ChatBox
-          data={data}
+          data={filteredData}
           aiProvider={aiProvider}
-          apiKey={aiProvider === "openai" ? { openaiApiKey } : {
-            geminiApiKey
-          }}
+          apiKey={aiProvider === "openai" ? { openaiApiKey } : { geminiApiKey }}
           onChat={onChat}
         />
       )}
