@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import "../styles/table.css";
 import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter } from "react-icons/fa";
-import { TableProps } from "../types/tableTypes";
+import { TableProps, Column } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
 import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
@@ -58,8 +58,11 @@ export function Table<T extends { id: string }>({
   );
   const [rowOrder, setRowOrder] = useState(data.map((row) => row.id));
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [filterValues, setFilterValues] = useState<Record<string, string | string[]>>({});
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [filterTypes, setFilterTypes] = useState<Record<string, "search" | "checkbox">>(
+    () => Object.fromEntries(columns.map((col) => [String(col.accessor), "search"]))
+  );
 
   const isRowSelected = (id: string) => selectedRowIds.has(id);
 
@@ -97,16 +100,43 @@ export function Table<T extends { id: string }>({
     onRowSelectChange?.(data.filter((row) => selectedRowIds.has(row.id)));
   }, [selectedRowIds, data, onRowSelectChange]);
 
+  // Derive unique filter options for checkbox filters
+  const filterOptions = useMemo(() => {
+    const options: Record<string, string[]> = {};
+    columns.forEach((col) => {
+      if (col.filterable) {
+        const uniqueValues = [...new Set(data.map((row) => String(row[col.accessor])))]
+          .filter((value) => value !== "" && value !== null && value !== undefined)
+          .sort();
+        options[String(col.accessor)] = uniqueValues;
+      }
+    });
+    return options;
+  }, [data, columns]);
+
   // Filter data based on filterValues
   const filteredData = useMemo(() => {
-    if (!Object.values(filterValues).some((val) => val.trim() !== "")) return data;
+    if (!Object.values(filterValues).some((val) => 
+      (typeof val === "string" && val.trim() !== "") || (Array.isArray(val) && val.length > 0)
+    )) return data;
+
     return data.filter((row) =>
       Object.entries(filterValues).every(([key, value]) => {
-        if (!value.trim()) return true;
         const column = columns.find((col) => String(col.accessor) === key);
         if (!column || !column.filterable) return true;
-        const cellValue = String(row[key as keyof T]).toLowerCase();
-        return cellValue.includes(value.toLowerCase());
+
+        if (typeof value === "string") {
+          // Search filter
+          if (!value.trim()) return true;
+          const cellValue = String(row[key as keyof T]).toLowerCase();
+          return cellValue.includes(value.toLowerCase());
+        } else if (Array.isArray(value)) {
+          // Checkbox filter
+          if (value.length === 0) return true;
+          const cellValue = String(row[key as keyof T]);
+          return value.includes(cellValue);
+        }
+        return true;
       })
     );
   }, [data, filterValues, columns]);
@@ -114,7 +144,7 @@ export function Table<T extends { id: string }>({
   const sortedData = React.useMemo(() => getSortedData(filteredData, sortConfig), [filteredData, sortConfig]);
 
   const orderedData = rowOrder
-    .filter((id) => sortedData.find((row) => row.id === id)) // Ensure only valid IDs
+    .filter((id) => sortedData.find((row) => row.id === id))
     .map((id) => sortedData.find((row) => row.id === id)!);
 
   const currentPageData = React.useMemo(
@@ -204,12 +234,24 @@ export function Table<T extends { id: string }>({
     return null;
   }, [paginatedData, groupBy]);
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: string | string[]) => {
     setFilterValues((prev) => ({
       ...prev,
       [key]: value,
     }));
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
+  };
+
+  const handleFilterTypeChange = (key: string, type: "search" | "checkbox") => {
+    setFilterTypes((prev) => ({
+      ...prev,
+      [key]: type,
+    }));
+    // Reset filter value when switching filter type
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: type === "search" ? "" : [],
+    }));
   };
 
   const clearFilters = () => {
@@ -262,19 +304,55 @@ export function Table<T extends { id: string }>({
             <h5>Filters</h5>
             {columns
               .filter((col) => col.filterable)
-              .map((col) => (
-                <div key={String(col.accessor)} style={{ marginBottom: "10px" }}>
-                  <label htmlFor={`filter-${String(col.accessor)}`}>{col.header}</label>
-                  <input
-                    id={`filter-${String(col.accessor)}`}
-                    type="text"
-                    value={filterValues[String(col.accessor)] || ""}
-                    onChange={(e) => handleFilterChange(String(col.accessor), e.target.value)}
-                    placeholder={`Filter by ${col.header}`}
-                    style={{ marginLeft: "10px", padding: "5px" }}
-                  />
-                </div>
-              ))}
+              .map((col) => {
+                const key = String(col.accessor);
+                const filterType = filterTypes[key];
+                return (
+                  <div key={key} style={{ marginBottom: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
+                      <label htmlFor={`filter-type-${key}`}>{col.header}</label>
+                      <select
+                        id={`filter-type-${key}`}
+                        value={filterType}
+                        onChange={(e) => handleFilterTypeChange(key, e.target.value as "search" | "checkbox")}
+                      >
+                        <option value="search">Search Filter</option>
+                        <option value="checkbox">Checkbox Filter</option>
+                      </select>
+                    </div>
+                    {filterType === "search" ? (
+                      <input
+                        id={`filter-${key}`}
+                        type="text"
+                        value={typeof filterValues[key] === "string" ? filterValues[key] : ""}
+                        onChange={(e) => handleFilterChange(key, e.target.value)}
+                        placeholder={`Filter by ${col.header}`}
+                        style={{ marginLeft: "10px", padding: "5px", width: "100%" }}
+                      />
+                    ) : (
+                      <div style={{ maxHeight: "150px", overflowY: "auto", border: "1px solid #ddd", padding: "5px" }}>
+                        {filterOptions[key]?.map((option) => (
+                          <div key={option} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                            <input
+                              type="checkbox"
+                              id={`checkbox-${key}-${option}`}
+                              checked={Array.isArray(filterValues[key]) && filterValues[key].includes(option)}
+                              onChange={(e) => {
+                                const currentValues = Array.isArray(filterValues[key]) ? filterValues[key] : [];
+                                const newValues = e.target.checked
+                                  ? [...currentValues, option]
+                                  : currentValues.filter((val) => val !== option);
+                                handleFilterChange(key, newValues);
+                              }}
+                            />
+                            <label htmlFor={`checkbox-${key}-${option}`}>{option}</label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             <button onClick={clearFilters} style={{ marginTop: "10px" }} className="clear-filter-button">
               {t('table.clearFilters')}
             </button>
