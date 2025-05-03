@@ -54,7 +54,7 @@ export function Table<T extends { id: string }>({
     new Set(columns.filter((col) => col.frozen).map((col) => col.accessor))
   );
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
-    () => Object.fromEntries(columns.map((col) => [String(col.accessor), col.visible ?? true]))
+    () => Object.fromEntries(columns.map((col) => [String(col.accessor), true]))
   );
   const [rowOrder, setRowOrder] = useState(data.map((row) => row.id));
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
@@ -158,13 +158,11 @@ export function Table<T extends { id: string }>({
   }, [currentPageData, sortConfig, draggableRows]);
 
   const updatedColumns = React.useMemo(() => {
-    return [...columns]
-      .filter((col) => columnVisibility[String(col.accessor)])
-      .sort((a, b) => {
-        const aFrozen = frozenCols.has(a.accessor);
-        const bFrozen = frozenCols.has(b.accessor);
-        return aFrozen === bFrozen ? 0 : aFrozen ? -1 : 1;
-      });
+    return columns.filter((col) => columnVisibility[String(col.accessor)]).sort((a, b) => {
+      const aFrozen = frozenCols.has(a.accessor);
+      const bFrozen = frozenCols.has(b.accessor);
+      return aFrozen === bFrozen ? 0 : aFrozen ? -1 : 1;
+    });
   }, [columns, frozenCols, columnVisibility]);
 
   const requestSort = (key: keyof T) => {
@@ -264,6 +262,56 @@ export function Table<T extends { id: string }>({
       setSortConfig(null);
     }
   }, [draggableRows]);
+
+  // Render row component
+  const renderRow = (row: T, index: number) => {
+    if (draggableRows) {
+      return (
+        <SortableRow
+          key={row.id}
+          row={row}
+          columns={updatedColumns}
+          frozenCols={frozenCols}
+          selectable={selectableRows}
+          isSelected={isRowSelected(row.id)}
+          onSelect={() => toggleRowSelection(row.id)}
+          style={{ display: 'table-row' }}
+        />
+      );
+    }
+
+    return (
+      <tr key={row.id} style={{ display: 'table-row' }}>
+        {selectableRows && (
+          <td>
+            <input
+              type="checkbox"
+              checked={isRowSelected(row.id)}
+              onChange={() => toggleRowSelection(row.id)}
+            />
+          </td>
+        )}
+        {updatedColumns.map((col, colIndex) => {
+          const isFrozen = frozenCols.has(col.accessor);
+          return (
+            <td
+              key={String(col.accessor)}
+              className={isFrozen ? "freeze" : ""}
+              style={{
+                left: isFrozen ? `${colIndex * 120}px` : undefined,
+                zIndex: isFrozen ? 2 : 0,
+                position: isFrozen ? 'sticky' : undefined,
+              }}
+            >
+              {col.render
+                ? col.render(row[col.accessor], row)
+                : String(row[col.accessor])}
+            </td>
+          );
+        })}
+      </tr>
+    );
+  };
 
   return (
     <div className="smart-table-container">
@@ -395,7 +443,7 @@ export function Table<T extends { id: string }>({
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
+              <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`} style={{ display: 'table', width: '100%' }}>
                 <thead>
                   <tr>
                     {selectableRows && (
@@ -424,6 +472,8 @@ export function Table<T extends { id: string }>({
                           className={`${isFrozen ? "freeze" : ""} ${!draggableRows && col.sortable ? "sortable" : ""}`}
                           style={{
                             left: isFrozen ? `${index * 120}px` : undefined,
+                            position: isFrozen ? 'sticky' : undefined,
+                            zIndex: isFrozen ? 3 : 1,
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -443,29 +493,19 @@ export function Table<T extends { id: string }>({
                     })}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody style={{ display: 'table-row-group' }}>
                   <SortableContext
                     id={`sortable-rows-${id}`}
                     items={paginatedData.map((row) => row.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {paginatedData.map((row) => (
-                      <SortableRow
-                        key={row.id}
-                        row={row}
-                        columns={updatedColumns}
-                        frozenCols={frozenCols}
-                        selectable={selectableRows}
-                        isSelected={isRowSelected(row.id)}
-                        onSelect={() => toggleRowSelection(row.id)}
-                      />
-                    ))}
+                    {paginatedData.map((row, index) => renderRow(row, index))}
                   </SortableContext>
                 </tbody>
               </table>
             </DndContext>
           ) : (
-            <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
+            <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`} style={{ display: 'table', width: '100%' }}>
               <thead>
                 <tr>
                   {selectableRows && (
@@ -486,6 +526,8 @@ export function Table<T extends { id: string }>({
                         className={`${isFrozen ? "freeze" : ""} ${!draggableRows && col.sortable ? "sortable" : ""}`}
                         style={{
                           left: isFrozen ? `${index * 120}px` : undefined,
+                          position: isFrozen ? 'sticky' : undefined,
+                          zIndex: isFrozen ? 3 : 1,
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -517,77 +559,51 @@ export function Table<T extends { id: string }>({
                   })}
                 </tr>
               </thead>
-              <tbody>
-                {groupedData
-                  ? Object.entries(groupedData).map(([group, rows]) => (
-                      <React.Fragment key={group}>
-                        <tr>
-                          <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
-                            <strong>{group}</strong>
-                          </td>
-                        </tr>
-                        {rows.map((row) => (
-                          <tr key={row.id}>
-                            {selectableRows && (
-                              <td>
-                                <input
-                                  type="checkbox"
-                                  checked={isRowSelected(row.id)}
-                                  onChange={() => toggleRowSelection(row.id)}
-                                />
-                              </td>
-                            )}
-                            {updatedColumns.map((col, index) => {
-                              const isFrozen = frozenCols.has(col.accessor);
-                              return (
-                                <td
-                                  key={String(col.accessor)}
-                                  className={isFrozen ? "freeze" : ""}
-                                  style={{
-                                    left: isFrozen ? `${index * 120}px` : undefined,
-                                    zIndex: isFrozen ? 2 : 0,
-                                  }}
-                                >
-                                  {col.render
-                                    ? col.render(row[col.accessor], row)
-                                    : String(row[col.accessor])}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))
-                  : paginatedData.map((row) => (
-                      <tr key={row.id}>
-                        {selectableRows && (
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={isRowSelected(row.id)}
-                              onChange={() => toggleRowSelection(row.id)}
-                            />
-                          </td>
-                        )}
-                        {updatedColumns.map((col, index) => {
-                          const isFrozen = frozenCols.has(col.accessor);
-                          return (
-                            <td
-                              key={String(col.accessor)}
-                              className={isFrozen ? "freeze" : ""}
-                              style={{
-                                left: isFrozen ? `${index * 120}px` : undefined,
-                                zIndex: isFrozen ? 2 : 0,
-                              }}
-                            >
-                              {col.render
-                                ? col.render(row[col.accessor], row)
-                                : String(row[col.accessor])}
-                            </td>
-                          );
-                        })}
+              <tbody style={{ display: 'table-row-group' }}>
+                {groupedData ? (
+                  Object.entries(groupedData).map(([group, rows]) => (
+                    <React.Fragment key={group}>
+                      <tr>
+                        <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
+                          <strong>{group}</strong>
+                        </td>
                       </tr>
-                    ))}
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          {selectableRows && (
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={isRowSelected(row.id)}
+                                onChange={() => toggleRowSelection(row.id)}
+                              />
+                            </td>
+                          )}
+                          {updatedColumns.map((col, colIndex) => {
+                            const isFrozen = frozenCols.has(col.accessor);
+                            return (
+                              <td
+                                key={String(col.accessor)}
+                                className={isFrozen ? "freeze" : ""}
+                                style={{
+                                  left: isFrozen ? `${colIndex * 120}px` : undefined,
+                                  zIndex: isFrozen ? 2 : 0,
+                                  position: isFrozen ? 'sticky' : undefined,
+                                }}
+                              >
+                                {col.render
+                                  ? col.render(row[col.accessor], row)
+                                  : String(row[col.accessor])}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  paginatedData.map((row, index) => renderRow(row, index))
+                )}
               </tbody>
             </table>
           )}
