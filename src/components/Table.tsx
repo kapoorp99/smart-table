@@ -12,6 +12,7 @@ import {
   verticalListSortingStrategy,
   arrayMove
 } from "@dnd-kit/sortable";
+import { TableVirtuoso } from 'react-virtuoso';
 import "../styles/table.css";
 import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter } from "react-icons/fa";
 import { TableProps, Column } from "../types/tableTypes";
@@ -155,7 +156,7 @@ export function Table<T extends { id: string }>({
   const paginatedData = React.useMemo(() => {
     if (draggableRows || !sortConfig) return currentPageData;
     return getSortedData(currentPageData, sortConfig);
-  }, [currentPageData, sortConfig, draggableRows]);
+  }, [currentPageData, sortConfig, draggableRows, rowsPerPage]);
 
   const updatedColumns = React.useMemo(() => {
     return columns.filter((col) => columnVisibility[String(col.accessor)]).sort((a, b) => {
@@ -190,10 +191,10 @@ export function Table<T extends { id: string }>({
   };
 
   const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortConfig(null);
     const newRowsPerPage = parseInt(e.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1);
+    setSortConfig(null);
   };
 
   const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -264,7 +265,10 @@ export function Table<T extends { id: string }>({
   }, [draggableRows]);
 
   // Render row component
-  const renderRow = (row: T, index: number) => {
+  const renderRow = (index: number) => {
+    const row = paginatedData[index];
+    if (!row) return null;
+
     if (draggableRows) {
       return (
         <SortableRow
@@ -434,7 +438,7 @@ export function Table<T extends { id: string }>({
           <p>{t('table.noData')}</p>
         </div>
       ) : (
-        <div className="smart-table-main">
+        <div className="smart-table-main" style={{ height: `${rowsPerPage * 50}px`, overflow: 'auto' }}>
           {draggableRows ? (
             <DndContext
               key={id}
@@ -443,8 +447,13 @@ export function Table<T extends { id: string }>({
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`} style={{ display: 'table', width: '100%' }}>
-                <thead>
+              <TableVirtuoso
+                key={`virtuoso-${rowsPerPage}`}
+                style={{ width: '100%' }}
+                data={paginatedData}
+                totalCount={paginatedData.length}
+                initialItemCount={paginatedData.length}
+                fixedHeaderContent={() => (
                   <tr>
                     {selectableRows && (
                       <th>
@@ -474,6 +483,8 @@ export function Table<T extends { id: string }>({
                             left: isFrozen ? `${index * 120}px` : undefined,
                             position: isFrozen ? 'sticky' : undefined,
                             zIndex: isFrozen ? 3 : 1,
+                            background: stickyHeader ? 'white' : undefined,
+                            top: stickyHeader ? 0 : undefined,
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -492,21 +503,47 @@ export function Table<T extends { id: string }>({
                       );
                     })}
                   </tr>
-                </thead>
-                <tbody style={{ display: 'table-row-group' }}>
-                  <SortableContext
-                    id={`sortable-rows-${id}`}
-                    items={paginatedData.map((row) => row.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {paginatedData.map((row, index) => renderRow(row, index))}
-                  </SortableContext>
-                </tbody>
-              </table>
+                )}
+                itemContent={(index) => {
+                  return renderRow(index);
+                }}
+                components={{
+                  Table: ({ children, style }) => (
+                    <table
+                      className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}
+                      style={{ ...style, display: 'table', width: '100%' }}
+                    >
+                      {children}
+                    </table>
+                  ),
+                  TableHead: ({ children, ...props }) => (
+                    <thead {...props} style={{ display: 'table-header-group' }}>
+                      {children}
+                    </thead>
+                  ),
+                  TableBody: ({ children, ...props }) => (
+                    <tbody {...props} style={{ display: 'table-row-group' }}>
+                      <SortableContext
+                        id={`sortable-rows-${id}`}
+                        items={paginatedData.map((row) => row.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {children}
+                      </SortableContext>
+                    </tbody>
+                  ),
+                  TableRow: ({ children }) => children,
+                }}
+              />
             </DndContext>
           ) : (
-            <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`} style={{ display: 'table', width: '100%' }}>
-              <thead>
+            <TableVirtuoso
+              key={`virtuoso-${rowsPerPage}`}
+              style={{ width: '100%' }}
+              data={groupedData ? [] : paginatedData}
+              totalCount={groupedData ? 0 : paginatedData.length}
+              initialItemCount={groupedData ? 0 : paginatedData.length}
+              fixedHeaderContent={() => (
                 <tr>
                   {selectableRows && (
                     <th>
@@ -528,6 +565,8 @@ export function Table<T extends { id: string }>({
                           left: isFrozen ? `${index * 120}px` : undefined,
                           position: isFrozen ? 'sticky' : undefined,
                           zIndex: isFrozen ? 3 : 1,
+                          background: stickyHeader ? 'white' : undefined,
+                          top: stickyHeader ? 0 : undefined,
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -558,54 +597,75 @@ export function Table<T extends { id: string }>({
                     );
                   })}
                 </tr>
-              </thead>
-              <tbody style={{ display: 'table-row-group' }}>
-                {groupedData ? (
-                  Object.entries(groupedData).map(([group, rows]) => (
-                    <React.Fragment key={group}>
-                      <tr>
-                        <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
-                          <strong>{group}</strong>
-                        </td>
-                      </tr>
-                      {rows.map((row, index) => (
-                        <tr key={row.id}>
-                          {selectableRows && (
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={isRowSelected(row.id)}
-                                onChange={() => toggleRowSelection(row.id)}
-                              />
+              )}
+              itemContent={(index) => {
+                return renderRow(index);
+              }}
+              components={{
+                Table: ({ children, style }) => (
+                  <table
+                    className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}
+                    style={{ ...style, display: 'table', width: '100%' }}
+                  >
+                    {children}
+                  </table>
+                ),
+                TableHead: ({ children, ...props }) => (
+                  <thead {...props} style={{ display: 'table-header-group' }}>
+                    {children}
+                  </thead>
+                ),
+                TableBody: ({ children, ...props }) => (
+                  <tbody {...props} style={{ display: 'table-row-group' }}>
+                    {groupedData ? (
+                      Object.entries(groupedData).map(([group, rows]) => (
+                        <React.Fragment key={group}>
+                          <tr>
+                            <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
+                              <strong>{group}</strong>
                             </td>
-                          )}
-                          {updatedColumns.map((col, colIndex) => {
-                            const isFrozen = frozenCols.has(col.accessor);
-                            return (
-                              <td
-                                key={String(col.accessor)}
-                                className={isFrozen ? "freeze" : ""}
-                                style={{
-                                  left: isFrozen ? `${colIndex * 120}px` : undefined,
-                                  zIndex: isFrozen ? 2 : 0,
-                                  position: isFrozen ? 'sticky' : undefined,
-                                }}
-                              >
-                                {col.render
-                                  ? col.render(row[col.accessor], row)
-                                  : String(row[col.accessor])}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  paginatedData.map((row, index) => renderRow(row, index))
-                )}
-              </tbody>
-            </table>
+                          </tr>
+                          {rows.map((row) => (
+                            <tr key={row.id}>
+                              {selectableRows && (
+                                <td>
+                                  <input
+                                    type="checkbox"
+                                    checked={isRowSelected(row.id)}
+                                    onChange={() => toggleRowSelection(row.id)}
+                                  />
+                                </td>
+                              )}
+                              {updatedColumns.map((col, index) => {
+                                const isFrozen = frozenCols.has(col.accessor);
+                                return (
+                                  <td
+                                    key={String(col.accessor)}
+                                    className={isFrozen ? "freeze" : ""}
+                                    style={{
+                                      left: isFrozen ? `${index * 120}px` : undefined,
+                                      zIndex: isFrozen ? 2 : 0,
+                                      position: isFrozen ? 'sticky' : undefined,
+                                    }}
+                                  >
+                                    {col.render
+                                      ? col.render(row[col.accessor], row)
+                                      : String(row[col.accessor])}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      children
+                    )}
+                  </tbody>
+                ),
+                TableRow: ({ children }) => children,
+              }}
+            />
           )}
         </div>
       )}
