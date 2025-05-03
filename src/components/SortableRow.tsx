@@ -11,6 +11,7 @@ export function SortableRow<T>({
   selectable = false,
   isSelected = false,
   onSelect,
+  style,
 }: {
   row: T;
   columns: any[];
@@ -18,6 +19,7 @@ export function SortableRow<T>({
   selectable?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
+  style: React.CSSProperties;
 }) {
   const {
     attributes,
@@ -29,13 +31,19 @@ export function SortableRow<T>({
     id: (row as any).id,
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  // const style = {
+  //   transform: CSS.Transform.toString(transform),
+  //   transition,
+  // };
 
   return (
-    <tr ref={setNodeRef} style={style}>
+    <tr ref={setNodeRef} style={{
+      ...style,
+      transform: CSS.Transform.toString(transform),
+      transition,
+      cursor: "grab",
+      backgroundColor: isSelected ? "#f0f0f0" : "white",
+    }}>
       {selectable && (
         <td>
           <input
