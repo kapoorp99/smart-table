@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "smart-table": {
+      "signature": "9bb29cd18699edcc2c5164f5c29f95a8",
+      "file": true
+    }
+  }
+}
