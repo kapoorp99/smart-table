@@ -1,5 +1,5 @@
 ---
-"smart-table": major
+"prakhar-smart-table": major
 ---
 
 initial commit
