@@ -14,44 +14,13 @@ Smart Table is an open-source project that aims to provide a powerful and flexib
 - Early access to new features
 - Recognition in our documentation and GitHub repository
 
-## Sponsorship Tiers
-
-### 🥉 Bronze Sponsor
-- $5/month
-- Name listed in README.md
-- Basic support
-
-### 🥈 Silver Sponsor
-- $20/month
-- Logo displayed in documentation
-- Priority support
-- Feature request priority
-
-### 💎 Gold Sponsor
-- $50/month
-- Logo displayed prominently in documentation
-- Direct communication with maintainers
-- Custom feature development
-- Early access to new features
-
-### 💎 Diamond Sponsor
-- $100/month
-- All Gold benefits
-- Dedicated support channel
-- Custom implementation support
-- Company logo in project header
-
 ## One-Time Donations
-
 We also accept one-time donations through:
-
-- [GitHub Sponsors](https://github.com/sponsors/your-username)
-- [Open Collective](https://opencollective.com/smart-table)
-- [Ko-fi](https://ko-fi.com/smart-table)
+*upi id: 6394kp@kotak*
 
 ## Corporate Sponsors
 
-For corporate sponsorships, please contact us at [sponsors@smart-table.dev](mailto:sponsors@smart-table.dev)
+For corporate sponsorships, please contact us at [prakharkapoorkp99@gmail.com](mailto:prakharkapoorkp99@gmail.com)
 
 ## Current Sponsors
 
@@ -88,10 +57,10 @@ We believe in transparency. All sponsorship funds are used for:
 - Community events
 - Infrastructure costs
 - Supporting contributors
+- Supporting maintainers
 
 ## Contact
 
 For sponsorship inquiries, please contact us at:
-- Email: [sponsors@smart-table.dev](mailto:sponsors@smart-table.dev)
-- Twitter: [@smart-table](https://twitter.com/smart-table)
-- GitHub: [github.com/your-username/smart-table](https://github.com/your-username/smart-table) 
+- Email: [sponsors@smart-table.dev](mailto:prakharkapoorkp99@gmail.com)
+- GitHub: [github.com/kapoorp99/smart-table](https://github.com/kapoorp99/smart-table) 
