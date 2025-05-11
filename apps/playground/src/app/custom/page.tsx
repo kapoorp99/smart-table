@@ -200,7 +200,7 @@ const columns: Column<Person>[] = [
     {
         header: "Actions",
         sortable: false,
-        render: (name, row) => {
+        render: (accessor, row) => {
             return (
                 <div
                 key={row.id}
@@ -209,7 +209,7 @@ const columns: Column<Person>[] = [
                         console.log("Edit", row);
                         alert(`Edit ${row.name}`);
                     }}>Edit</button>
-                    <button onClick={() => alert(`Delete ${row.name}`)}>Delete</button>
+                    <button onClick={() => alert(`Delete ${accessor}`)}>Delete</button>
                 </div>
             );
         },
