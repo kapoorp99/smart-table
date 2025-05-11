@@ -18,12 +18,6 @@ Install via npm:
 npm install smart-table
 ```
 
-Or include it directly in your HTML:
-
-```html
-<script src="smart-table.min.js"></script>
-```
-
 ## Usage
 
 ### Basic Example
