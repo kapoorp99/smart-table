@@ -1,8 +1,8 @@
 'use client';
 
 import React from "react";
-import { SmartTable, type Column } from "smart-table";
-import "smart-table/dist/index.css";
+import { SmartTable, type Column } from "prakhar-smart-table";
+import "prakhar-smart-table/dist/index.css";
 
 type Person = {
     id: string;

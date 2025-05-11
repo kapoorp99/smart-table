@@ -60,15 +60,15 @@ importers:
       next:
         specifier: 15.3.2
         version: 15.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      prakhar-smart-table:
+        specifier: ^4.0.0
+        version: 4.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@dnd-kit/modifiers@9.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(i18next-browser-languagedetector@8.1.0)(i18next@25.1.2(typescript@5.8.2))(papaparse@5.5.2)(react-dom@19.1.0(react@19.1.0))(react-i18next@15.5.1(i18next@25.1.2(typescript@5.8.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.2))(react-icons@5.5.0(react@19.1.0))(react-virtuoso@4.12.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(xlsx@0.18.5)
       react:
         specifier: ^19.0.0
         version: 19.1.0
       react-dom:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
-      smart-table:
-        specifier: file:.yalc/smart-table
-        version: file:apps/playground/.yalc/smart-table(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@dnd-kit/modifiers@9.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(i18next-browser-languagedetector@8.1.0)(i18next@25.1.2(typescript@5.8.2))(papaparse@5.5.2)(react-dom@19.1.0(react@19.1.0))(react-i18next@15.5.1(i18next@25.1.2(typescript@5.8.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.2))(react-icons@5.5.0(react@19.1.0))(react-virtuoso@4.12.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(xlsx@0.18.5)
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3
@@ -6123,6 +6123,22 @@ packages:
     resolution: {integrity: sha512-dle9A3yYxlBSrt8Fu+IpjGT8SY8hN0mlaA6GY8t0P5PjIOZemULz/E2Bnm/2dcUOena75OTNkHI76uZBNUUq3A==}
     engines: {node: ^10 || ^12 || >=14}
 
+  prakhar-smart-table@4.0.0:
+    resolution: {integrity: sha512-noLjnVIQHZCZub4obVwEVQvo0MkymyWtSDDMS1R8RlMHFxdrEu9XAkEvqlV5vQWTkZcXZfQbEFhFOfvfc4kqaA==}
+    peerDependencies:
+      '@dnd-kit/core': ^6.3.1
+      '@dnd-kit/modifiers': ^9.0.0
+      '@dnd-kit/sortable': ^10.0.0
+      i18next: ^25.0.1
+      i18next-browser-languagedetector: ^8.0.5
+      papaparse: ^5.5.2
+      react: ^17.0.0 || ^18.0.0
+      react-dom: ^16.0.0 ||^17.0.0 || ^18.0.0
+      react-i18next: ^15.5.1
+      react-icons: ^5.5.0
+      react-virtuoso: ^4.12.7
+      xlsx: ^0.18.5
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -6743,22 +6759,6 @@ packages:
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
-
-  smart-table@file:apps/playground/.yalc/smart-table:
-    resolution: {directory: apps/playground/.yalc/smart-table, type: directory}
-    peerDependencies:
-      '@dnd-kit/core': ^6.3.1
-      '@dnd-kit/modifiers': ^9.0.0
-      '@dnd-kit/sortable': ^10.0.0
-      i18next: ^25.0.1
-      i18next-browser-languagedetector: ^8.0.5
-      papaparse: ^5.5.2
-      react: ^17.0.0 || ^18.0.0
-      react-dom: ^16.0.0 ||^17.0.0 || ^18.0.0
-      react-i18next: ^15.5.1
-      react-icons: ^5.5.0
-      react-virtuoso: ^4.12.7
-      xlsx: ^0.18.5
 
   snake-case@2.1.0:
     resolution: {integrity: sha512-FMR5YoPFwOLuh4rRz92dywJjyKYZNLpMn1R5ujVpIYkbA9p01fq8RMg0FkO4M+Yobt4MjHeLTJVm5xFFBHSV2Q==}
@@ -15190,6 +15190,22 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  prakhar-smart-table@4.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@dnd-kit/modifiers@9.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(i18next-browser-languagedetector@8.1.0)(i18next@25.1.2(typescript@5.8.2))(papaparse@5.5.2)(react-dom@19.1.0(react@19.1.0))(react-i18next@15.5.1(i18next@25.1.2(typescript@5.8.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.2))(react-icons@5.5.0(react@19.1.0))(react-virtuoso@4.12.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(xlsx@0.18.5):
+    dependencies:
+      '@dnd-kit/core': 6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
+      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
+      '@dnd-kit/utilities': 3.2.2(react@19.1.0)
+      i18next: 25.1.2(typescript@5.8.2)
+      i18next-browser-languagedetector: 8.1.0
+      papaparse: 5.5.2
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-i18next: 15.5.1(i18next@25.1.2(typescript@5.8.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.2)
+      react-icons: 5.5.0(react@19.1.0)
+      react-virtuoso: 4.12.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      xlsx: 0.18.5
+
   prelude-ls@1.2.1: {}
 
   prettier@2.8.8: {}
@@ -16056,22 +16072,6 @@ snapshots:
   slash@4.0.0: {}
 
   smart-buffer@4.2.0: {}
-
-  smart-table@file:apps/playground/.yalc/smart-table(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@dnd-kit/modifiers@9.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))(i18next-browser-languagedetector@8.1.0)(i18next@25.1.2(typescript@5.8.2))(papaparse@5.5.2)(react-dom@19.1.0(react@19.1.0))(react-i18next@15.5.1(i18next@25.1.2(typescript@5.8.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.2))(react-icons@5.5.0(react@19.1.0))(react-virtuoso@4.12.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(xlsx@0.18.5):
-    dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
-      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
-      '@dnd-kit/utilities': 3.2.2(react@19.1.0)
-      i18next: 25.1.2(typescript@5.8.2)
-      i18next-browser-languagedetector: 8.1.0
-      papaparse: 5.5.2
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-      react-i18next: 15.5.1(i18next@25.1.2(typescript@5.8.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.2)
-      react-icons: 5.5.0(react@19.1.0)
-      react-virtuoso: 4.12.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      xlsx: 0.18.5
 
   snake-case@2.1.0:
     dependencies:
