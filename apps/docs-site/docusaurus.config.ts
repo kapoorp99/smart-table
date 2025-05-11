@@ -6,19 +6,18 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Smart Table',
-  tagline: 'A lightweight and customizable JavaScript library for creating dynamic, interactive, and responsive tables',
+  tagline: 'A simple and powerful table component',
   favicon: 'img/favicon.ico',
-
   // Set the production url of your site here
-  url: 'https://smart-table-docs.example.com',
+  url: 'https://your-docusaurus-site.example.com',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'your-github-username', // Usually your GitHub org/user name.
-  projectName: 'smart-table', // Usually your repo name.
+  organizationName: 'facebook', // Usually your GitHub org/user name.
+  projectName: 'docusaurus', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -39,7 +38,23 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/your-github-username/smart-table/tree/main/docs-site/',
+          editUrl:
+            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+        },
+        blog: {
+          showReadingTime: true,
+          feedOptions: {
+            type: ['rss', 'atom'],
+            xslt: true,
+          },
+          // Please change this to your repo.
+          // Remove this to remove the "edit this page" links.
+          editUrl:
+            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          // Useful options to enforce blogging best practices
+          onInlineTags: 'warn',
+          onInlineAuthors: 'warn',
+          onUntruncatedBlogPosts: 'warn',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -50,11 +65,11 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/smart-table-social-card.jpg',
+    image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'Smart Table',
+      title: 'My Site',
       logo: {
-        alt: 'Smart Table Logo',
+        alt: 'My Site Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -62,10 +77,11 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Documentation',
+          label: 'Tutorial',
         },
+        {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/your-github-username/smart-table',
+          href: 'https://github.com/facebook/docusaurus',
           label: 'GitHub',
           position: 'right',
         },
@@ -78,20 +94,8 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Getting Started',
-              to: '/docs/getting-started',
-            },
-            {
-              label: 'API Reference',
-              to: '/docs/api',
-            },
-            {
-              label: 'Props Reference',
-              to: '/docs/props-reference',
-            },
-            {
-              label: 'Examples',
-              to: '/docs/examples',
+              label: 'Tutorial',
+              to: '/docs/intro',
             },
           ],
         },
@@ -99,12 +103,16 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'GitHub Issues',
-              href: 'https://github.com/your-github-username/smart-table/issues',
+              label: 'Stack Overflow',
+              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
             },
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/smart-table',
+              label: 'Discord',
+              href: 'https://discordapp.com/invite/docusaurus',
+            },
+            {
+              label: 'X',
+              href: 'https://x.com/docusaurus',
             },
           ],
         },
@@ -112,13 +120,17 @@ const config: Config = {
           title: 'More',
           items: [
             {
+              label: 'Blog',
+              to: '/blog',
+            },
+            {
               label: 'GitHub',
-              href: 'https://github.com/your-github-username/smart-table',
+              href: 'https://github.com/facebook/docusaurus',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Smart Table. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
