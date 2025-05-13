@@ -17,7 +17,7 @@
 */
 export type Column<T> = {
   header: string;
-  accessor: keyof T;
+  accessor?: keyof T;
   render?: (value: any, row: T) => React.ReactNode;
   sortable?: boolean;
   frozen?: boolean;
@@ -25,6 +25,7 @@ export type Column<T> = {
   filterKey?: string;
   visible?: boolean; // Indicates if the column is visible or hidden
   filterable?: boolean; // Indicates if the column is filterable
+  isActionColumn?: boolean; // Indicates if the column is an action column
 };
 
 export type TableProps<T> = {
