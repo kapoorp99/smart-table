@@ -15,7 +15,7 @@ import {
 import { TableVirtuoso } from 'react-virtuoso';
 import "../styles/table.css";
 import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter } from "react-icons/fa";
-import { TableProps, Column } from "../types/tableTypes";
+import { TableProps } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
 import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
