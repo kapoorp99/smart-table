@@ -1,5 +1,14 @@
 # smart-table
 
+## 5.0.0
+
+### Major Changes
+
+- initial commit
+- updated the readme
+- updated the readme for end users
+- fixed type issues
+
 ## 4.0.0
 
 ### Major Changes
