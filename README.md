@@ -1,84 +1,57 @@
-# Turborepo starter
+# Smart Table Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+This repository contains the source code for the **Smart Table** project, organized as a monorepo. It includes multiple packages and tools to build, test, and deploy the project efficiently.
 
-## Using this example
+## Packages
 
-Run the following command:
+### 1. **Core**
+- Location: `packages/core`
+- Description: Core library for Smart Table functionality, including data processing and table rendering logic.
 
-```sh
-npx create-turbo@latest
-```
+### 2. **UI Components**
+- Location: `packages/ui-components`
+- Description: Reusable UI components for building Smart Table interfaces.
 
-## What's inside?
+### 3. **API**
+- Location: `packages/api`
+- Description: Backend API for managing and serving table data.
 
-This Turborepo includes the following packages/apps:
+### 4. **Utils**
+- Location: `packages/utils`
+- Description: Shared utility functions used across the project.
 
-### Apps and Packages
+## Getting Started
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Prerequisites
+- Node.js (>= 16.x)
+- Yarn (>= 1.x)
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Installation
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/your-username/smart-table-monorepo.git
+    cd smart-table-monorepo
+    ```
+2. Install dependencies:
+    ```bash
+    yarn install
+    ```
 
-### Utilities
+### Running the Project
+- Start the development environment:
+  ```bash
+  yarn dev
+  ```
+- Run tests:
+  ```bash
+  yarn test
+  ```
 
-This Turborepo has some additional tools already setup for you:
+## Contributing
+Contributions are welcome! Please follow the [contribution guidelines](CONTRIBUTING.md).
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## License
+This project is licensed under the [MIT License](LICENSE).
 
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## Contact
+For questions or support, please open an issue or contact the maintainers.
