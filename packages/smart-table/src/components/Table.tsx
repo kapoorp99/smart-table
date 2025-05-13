@@ -551,12 +551,12 @@ export function Table<T extends { id: string }>({
                       </table>
                     ),
                     TableHead: ({ children, ...props }) => (
-                      <thead {...props} style={{ display: 'table-header-group' }}>
+                      <thead {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-header-group' }}>
                         {children}
                       </thead>
                     ),
                     TableBody: ({ children, ...props }) => (
-                      <tbody {...props} style={{ display: 'table-row-group' }}>
+                      <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
                         <SortableContext
                           id={`sortable-rows-${id}`}
                           items={paginatedData.map((row) => row.id)}
@@ -589,12 +589,12 @@ export function Table<T extends { id: string }>({
                     </table>
                   ),
                   TableHead: ({ children, ...props }) => (
-                    <thead {...props} style={{ display: 'table-header-group' }}>
+                    <thead {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-header-group' }}>
                       {children}
                     </thead>
                   ),
                   TableBody: ({ children, ...props }) => (
-                    <tbody {...props} style={{ display: 'table-row-group' }}>
+                    <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
                       {groupedData ? (
                         Object.entries(groupedData).map(([group, rows]) => (
                           <React.Fragment key={group}>
