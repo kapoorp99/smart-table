@@ -1,4 +1,4 @@
-import React, { useId, useState, useMemo } from "react";
+import React, { useId, useState, useMemo, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import {
   DndContext,
@@ -15,7 +15,7 @@ import {
 import { TableVirtuoso } from 'react-virtuoso';
 import "../styles/table.css";
 import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter } from "react-icons/fa";
-import { TableProps } from "../types/tableTypes";
+import { TableProps, Column } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
 import { exportToCSV, exportToXLSX } from "../utils/exportUtils";
@@ -45,6 +45,7 @@ export function Table<T extends { id: string }>({
   showLanguageSwitcher = false,
   language,
   enableVirtualization = true,
+  cacheKey, // New prop
 }: TableProps<T>) {
   const { t } = useTranslation();
   const id = useId();
@@ -65,6 +66,71 @@ export function Table<T extends { id: string }>({
   const [filterTypes, setFilterTypes] = useState<Record<string, "search" | "checkbox">>(
     () => Object.fromEntries(columns.map((col) => [String(col.accessor), "search"]))
   );
+
+  // Header caching logic
+  const headerCacheKey = cacheKey || `table-headers-${tableTitle || id}`;
+  const [cachedColumns, setCachedColumns] = useState<Column<T>[]>(columns);
+
+  useEffect(() => {
+    // Retrieve cached headers
+    try {
+      const cached = localStorage.getItem(headerCacheKey);
+      if (cached) {
+        const parsedColumns: Column<T>[] = JSON.parse(cached);
+        // Merge cached columns with provided columns to ensure consistency
+        const mergedColumns = columns.map((col) => {
+          const cachedCol = parsedColumns.find((c) => c.accessor === col.accessor);
+          return cachedCol ? { ...col, ...cachedCol } : col;
+        });
+        setCachedColumns(mergedColumns);
+
+        // Update column visibility and frozen state from cache
+        const visibility = Object.fromEntries(
+          mergedColumns.map((col) => [String(col.accessor), col.visible !== false])
+        );
+        setColumnVisibility(visibility);
+
+        const frozen = new Set(
+          mergedColumns.filter((col) => col.frozen).map((col) => col.accessor)
+        );
+        setFrozenCols(frozen);
+      } else {
+        // Cache headers if not already cached
+        localStorage.setItem(headerCacheKey, JSON.stringify(columns));
+        setCachedColumns(columns);
+      }
+    } catch (error) {
+      console.error("Error accessing localStorage for header caching:", error);
+      setCachedColumns(columns);
+    }
+  }, [headerCacheKey]);
+
+  // Update cache when columns change
+  useEffect(() => {
+    try {
+      const updatedColumns = cachedColumns.map((col) => ({
+        ...col,
+        visible: columnVisibility[String(col.accessor)],
+        frozen: frozenCols.has(col.accessor),
+      }));
+      localStorage.setItem(headerCacheKey, JSON.stringify(updatedColumns));
+      setCachedColumns(updatedColumns);
+    } catch (error) {
+      console.error("Error updating header cache:", error);
+    }
+  }, [columnVisibility, frozenCols, headerCacheKey]);
+
+  // Clear cache function
+  const clearHeaderCache = () => {
+    try {
+      localStorage.removeItem(headerCacheKey);
+      setCachedColumns(columns);
+      setColumnVisibility(Object.fromEntries(columns.map((col) => [String(col.accessor), true])));
+      setFrozenCols(new Set(columns.filter((col) => col.frozen).map((col) => col.accessor)));
+    } catch (error) {
+      console.error("Error clearing header cache:", error);
+    }
+  };
 
   const isRowSelected = (id: string) => selectedRowIds.has(id);
 
@@ -105,7 +171,7 @@ export function Table<T extends { id: string }>({
   // Derive unique filter options for checkbox filters
   const filterOptions = useMemo(() => {
     const options: Record<string, string[]> = {};
-    columns.forEach((col) => {
+    cachedColumns.forEach((col) => {
       if (col.filterable) {
         const uniqueValues = [...new Set(data.map((row) => String(row[col.accessor])))]
           .filter((value) => value !== "" && value !== null && value !== undefined)
@@ -114,7 +180,7 @@ export function Table<T extends { id: string }>({
       }
     });
     return options;
-  }, [data, columns]);
+  }, [data, cachedColumns]);
 
   // Filter data based on filterValues
   const filteredData = useMemo(() => {
@@ -124,7 +190,7 @@ export function Table<T extends { id: string }>({
 
     return data.filter((row) =>
       Object.entries(filterValues).every(([key, value]) => {
-        const column = columns.find((col) => String(col.accessor) === key);
+        const column = cachedColumns.find((col) => String(col.accessor) === key);
         if (!column || !column.filterable) return true;
 
         if (typeof value === "string") {
@@ -141,7 +207,7 @@ export function Table<T extends { id: string }>({
         return true;
       })
     );
-  }, [data, filterValues, columns]);
+  }, [data, filterValues, cachedColumns]);
 
   const sortedData = React.useMemo(() => getSortedData(filteredData, sortConfig), [filteredData, sortConfig]);
 
@@ -160,12 +226,12 @@ export function Table<T extends { id: string }>({
   }, [currentPageData, sortConfig, draggableRows, rowsPerPage]);
 
   const updatedColumns = React.useMemo(() => {
-    return columns.filter((col) => columnVisibility[String(col.accessor)]).sort((a, b) => {
+    return cachedColumns.filter((col) => columnVisibility[String(col.accessor)]).sort((a, b) => {
       const aFrozen = frozenCols.has(a.accessor);
       const bFrozen = frozenCols.has(b.accessor);
       return aFrozen === bFrozen ? 0 : aFrozen ? -1 : 1;
     });
-  }, [columns, frozenCols, columnVisibility]);
+  }, [cachedColumns, frozenCols, columnVisibility]);
 
   const requestSort = (key: keyof T) => {
     setSortConfig((prev) => {
@@ -415,7 +481,7 @@ export function Table<T extends { id: string }>({
             onChange={(e) => setGroupBy(e.target.value || null)}
           >
             <option value="">None</option>
-            {columns.map((col) => (
+            {cachedColumns.map((col) => (
               <option key={String(col.accessor)} value={String(col.accessor)}>
                 {col.header}
               </option>
@@ -437,7 +503,7 @@ export function Table<T extends { id: string }>({
         {showFilterPanel && (
           <div className="filter-panel" style={{ marginTop: "10px", padding: "10px", border: "1px solid #ccc" }}>
             <h5>Filters</h5>
-            {columns
+            {cachedColumns
               .filter((col) => col.filterable)
               .map((col) => {
                 const key = String(col.accessor);
@@ -493,7 +559,7 @@ export function Table<T extends { id: string }>({
             </button>
           </div>
         )}
-        {columns.map((col) => (
+        {cachedColumns.map((col) => (
           <div key={String(col.accessor)}>
             <label
               htmlFor={`toggle-${String(col.accessor)}`}
@@ -514,6 +580,9 @@ export function Table<T extends { id: string }>({
             {t('table.export')} as {exportFileType.toUpperCase()}
           </button>
         )}
+        <button onClick={clearHeaderCache} className="clear-cache-button">
+          Clear Header Cache
+        </button>
       </div>
 
       {filteredData.length === 0 ? (
@@ -590,8 +659,8 @@ export function Table<T extends { id: string }>({
                   ),
                   TableHead: ({ children, ...props }) => (
                     <thead {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-header-group' }}>
-                      {children}
-                    </thead>
+                        {children}
+                      </thead>
                   ),
                   TableBody: ({ children, ...props }) => (
                     <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
