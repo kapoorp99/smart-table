@@ -4,6 +4,11 @@
     "smart-table": {
       "signature": "83767757cd63caa751f7712efe27c20e",
       "file": true
+    },
+    "prakhar-smart-table": {
+      "signature": "f3b8658c279e7db6eed834e9bf46a48a",
+      "file": true,
+      "replaced": "^5.0.0"
     }
   }
 }
