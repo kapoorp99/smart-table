@@ -96,8 +96,10 @@ export function Table<T extends { id: string }>({
         setFrozenCols(frozen);
       } else {
         // Cache headers if not already cached
-        localStorage.setItem(headerCacheKey, JSON.stringify(columns));
-        setCachedColumns(columns);
+        if (cacheKey) {
+          localStorage.setItem(headerCacheKey, JSON.stringify(columns));
+          setCachedColumns(columns);
+        }
       }
     } catch (error) {
       console.error("Error accessing localStorage for header caching:", error);
@@ -659,8 +661,8 @@ export function Table<T extends { id: string }>({
                   ),
                   TableHead: ({ children, ...props }) => (
                     <thead {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-header-group' }}>
-                        {children}
-                      </thead>
+                      {children}
+                    </thead>
                   ),
                   TableBody: ({ children, ...props }) => (
                     <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
