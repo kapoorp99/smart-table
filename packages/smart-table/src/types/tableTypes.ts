@@ -50,4 +50,5 @@ export type TableProps<T> = {
   showLanguageSwitcher?: boolean; // Optional flag to show language switcher
   language: string; // Optional language for the table
   enableVirtualization: boolean; // Optional flag to enable virtualization for large datasets
+  cacheKey?: string; // Optional cache key for caching data
 };
