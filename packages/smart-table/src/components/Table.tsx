@@ -70,28 +70,36 @@ export function Table<T extends { id: string }>({
     () => Object.fromEntries(columns.map((col) => [String(col.accessor), "search"]))
   );
 
+  // Track if component is mounted (for client-only features)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   // Header caching logic
   const headerCacheKey = cacheKey || `table-headers-${tableTitle || id}`;
   const [cachedColumns, setCachedColumns] = useState<Column<T>[]>(columns);
 
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-    // Try to load from localStorage
-    try {
-      const cached = localStorage.getItem(`${headerCacheKey}-widths`);
-      if (cached) return JSON.parse(cached);
-    } catch {}
+    // Only access localStorage on client
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(`${headerCacheKey}-widths`);
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
     // Default width
     return Object.fromEntries(columns.map((col) => [String(col.accessor), 120]));
   });
 
   // Persist column widths
   useEffect(() => {
-    try {
-      localStorage.setItem(`${headerCacheKey}-widths`, JSON.stringify(columnWidths));
-    } catch {}
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`${headerCacheKey}-widths`, JSON.stringify(columnWidths));
+      } catch {}
+    }
   }, [columnWidths, headerCacheKey]);
 
-  // Column resize logic
+  // Column resize logic (window guards)
   const resizingCol = useRef<string | null>(null);
   const startX = useRef<number>(0);
   const startWidth = useRef<number>(0);
@@ -100,9 +108,11 @@ export function Table<T extends { id: string }>({
     resizingCol.current = key;
     startX.current = e.clientX;
     startWidth.current = columnWidths[key] || 120;
-    document.body.style.cursor = 'col-resize';
-    window.addEventListener('mousemove', handleResizing);
-    window.addEventListener('mouseup', handleResizeEnd);
+    if (typeof window !== 'undefined') {
+      document.body.style.cursor = 'col-resize';
+      window.addEventListener('mousemove', handleResizing);
+      window.addEventListener('mouseup', handleResizeEnd);
+    }
   };
 
   const handleResizing = (e: MouseEvent) => {
@@ -116,13 +126,16 @@ export function Table<T extends { id: string }>({
 
   const handleResizeEnd = () => {
     resizingCol.current = null;
-    document.body.style.cursor = '';
-    window.removeEventListener('mousemove', handleResizing);
-    window.removeEventListener('mouseup', handleResizeEnd);
+    if (typeof window !== 'undefined') {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleResizing);
+      window.removeEventListener('mouseup', handleResizeEnd);
+    }
   };
 
+  // Retrieve cached headers (window guard)
   useEffect(() => {
-    // Retrieve cached headers
+    if (typeof window === 'undefined') return;
     try {
       const cached = localStorage.getItem(headerCacheKey);
       if (cached) {
@@ -157,8 +170,9 @@ export function Table<T extends { id: string }>({
     }
   }, [headerCacheKey]);
 
-  // Update cache when columns change
+  // Update cache when columns change (window guard)
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
       const updatedColumns = cachedColumns.map((col) => ({
         ...col,
@@ -172,15 +186,17 @@ export function Table<T extends { id: string }>({
     }
   }, [columnVisibility, frozenCols, headerCacheKey]);
 
-  // Clear cache function
+  // Clear cache function (window guard)
   const clearHeaderCache = () => {
-    try {
-      localStorage.removeItem(headerCacheKey);
-      setCachedColumns(columns);
-      setColumnVisibility(Object.fromEntries(columns.map((col) => [String(col.accessor), true])));
-      setFrozenCols(new Set(columns.filter((col) => col.frozen).map((col) => col.accessor)));
-    } catch (error) {
-      console.error("Error clearing header cache:", error);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(headerCacheKey);
+        setCachedColumns(columns);
+        setColumnVisibility(Object.fromEntries(columns.map((col) => [String(col.accessor), true])));
+        setFrozenCols(new Set(columns.filter((col) => col.frozen).map((col) => col.accessor)));
+      } catch (error) {
+        console.error("Error clearing header cache:", error);
+      }
     }
   };
 
@@ -210,8 +226,9 @@ export function Table<T extends { id: string }>({
     }
   };
 
-  React.useEffect(() => {
-    if (language) {
+  // Ensure i18n language is set the same on both client and server
+  useEffect(() => {
+    if (language && i18n.language !== language) {
       i18n.changeLanguage(language);
     }
   }, [language]);
@@ -728,17 +745,22 @@ export function Table<T extends { id: string }>({
     reset: true,
   };
   const [openSections, setOpenSections] = useState(() => {
-    try {
-      const saved = localStorage.getItem('table-config-sections');
-      return saved ? JSON.parse(saved) : defaultSections;
-    } catch {
-      return defaultSections;
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('table-config-sections');
+        return saved ? JSON.parse(saved) : defaultSections;
+      } catch {
+        return defaultSections;
+      }
     }
+    return defaultSections;
   });
   const toggleSection = (key: keyof typeof defaultSections) => {
     setOpenSections(prev => {
       const updated = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('table-config-sections', JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('table-config-sections', JSON.stringify(updated));
+      }
       return updated;
     });
   };
@@ -755,6 +777,12 @@ export function Table<T extends { id: string }>({
     setTooltip({ text, x: e.clientX, y: e.clientY });
   };
   const hideTooltip = () => setTooltip(null);
+
+  // Only render client-only features after mount
+  if (!mounted) {
+    // Optionally, render a skeleton or nothing
+    return null;
+  }
 
   return (
     <div className="smart-table-app-layout">
