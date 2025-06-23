@@ -680,119 +680,164 @@ export function Table<T extends { id: string }>({
   };
 
   return (
-    <div className="smart-table-container">
-      {tableTitle && <h3>{tableTitle}</h3>}
-      {tableSubtitle && <h4>{tableSubtitle}</h4>}
-
-      <div className="table-configurator" aria-label="Table Configurator">
-        <div className="config-section">
-          <div className="config-section-title"><FaLayerGroup style={{ marginRight: 6 }} /> Grouping</div>
-          <div className="config-section-helper">Group your data by any column to reveal patterns and trends.</div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: 8 }}>
-            <label htmlFor="group-by-selector" style={{ minWidth: 80 }}>Group By:</label>
-            <select
-              id="group-by-selector"
-              value={groupBy || ""}
-              onChange={(e) => setGroupBy(e.target.value || null)}
-              aria-label="Group by column"
-              style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid var(--color-border)' }}
-            >
-              <option value="">None</option>
-              {cachedColumns.map((col) => (
-                <option key={String(col.accessor)} value={String(col.accessor)}>
-                  {col.header}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="config-section">
-          <div className="config-section-title"><FaLanguage style={{ marginRight: 6 }} /> Language</div>
-          <div className="config-section-helper">Switch the table language for a global audience.</div>
-          <div style={{ marginTop: 8 }}>{showLanguageSwitcher && <LanguageSwitcher />}</div>
-        </div>
-        <div className="config-section">
-          <div className="config-section-title"><FaFilter style={{ marginRight: 6 }} /> Filters</div>
-          <div className="config-section-helper">Narrow down your data with flexible, per-column filters.</div>
-          <div style={{ marginTop: 8 }}>
-            <span style={{ fontSize: 13, color: '#888' }}>Click the <FaFilter style={{ verticalAlign: 'middle' }} /> icon in any column header to filter that column.</span>
-            <button onClick={clearFilters} className="clear-filter-button" style={{ marginLeft: 12 }} aria-label="Clear all filters">
-              <FaBroom style={{ marginRight: 4 }} /> Clear All Filters
-            </button>
-          </div>
-        </div>
-        <div className="config-section">
-          <div className="config-section-title"><FaColumns style={{ marginRight: 6 }} /> Columns</div>
-          <div className="config-section-helper">Show or hide columns to focus on what matters most.</div>
-          <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {cachedColumns.map((col) => (
-              <label
-                key={String(col.accessor)}
-                htmlFor={`toggle-${String(col.accessor)}`}
-                style={{ display: "flex", alignItems: "center", gap: "6px", background: columnVisibility[String(col.accessor)] ? 'var(--color-accent-light)' : 'transparent', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', border: '1px solid var(--color-border)' }}
-              >
-                <input
-                  id={`toggle-${String(col.accessor)}`}
-                  type="checkbox"
-                  checked={columnVisibility[String(col.accessor)]}
-                  onChange={() => toggleColumnVisibility(String(col.accessor))}
-                  aria-label={`Toggle column ${col.header}`}
-                />
-                {col.header}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="config-section">
-          <div className="config-section-title"><FaFileExport style={{ marginRight: 6 }} /> Export</div>
-          <div className="config-section-helper">Export your current view for reporting or sharing.</div>
-          <div style={{ marginTop: 8 }}>
-            {allowExport && (
-              <button onClick={handleExport} className="export-button" aria-label="Export table data">
-                <FaFileExport style={{ marginRight: 4 }} /> Export as {exportFileType.toUpperCase()}
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="config-section">
-          <div className="config-section-title"><FaBroom style={{ marginRight: 6 }} /> Reset</div>
-          <div className="config-section-helper">Restore the table to its original state.</div>
-          <div style={{ marginTop: 8 }}>
-            <button onClick={clearHeaderCache} className="clear-cache-button" aria-label="Clear header cache">
-              <FaBroom style={{ marginRight: 4 }} /> Clear Header Cache
-            </button>
-          </div>
-        </div>
+    <div className="smart-table-app-layout">
+      {/* Optional: Product-style header */}
+      <div className="smart-table-header" aria-label="App Header">
+        <span className="smart-table-logo" style={{ fontWeight: 700, fontSize: 22, color: 'var(--color-primary)', letterSpacing: 1 }}>SmartTable Pro</span>
+        <span style={{ marginLeft: 16, color: '#888', fontSize: 15 }}>Your Data, Your Way</span>
       </div>
-
-      {filteredData.length === 0 && !loading ? (
-        <div className="empty-state">
-          <p>{t('table.noData')}</p>
-        </div>
-      ) : (
-        <div className="smart-table-main"
-          style={enableVirtualization ? { height: `${rowsPerPage * 20}px` } : {}}
-        >
-          {loading ? (
-            <div className="table-loading-spinner" style={{ textAlign: 'center', padding: 40 }}>
-              <div className="spinner" style={{ width: 40, height: 40, border: '4px solid #eee', borderTop: '4px solid #888', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
-              <div style={{ marginTop: 12, color: '#888' }}>Loading...</div>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {/* Sidebar: Table Configurator */}
+        <aside className="smart-table-sidebar" aria-label="Table Configurator Sidebar">
+          {tableTitle && <h3 style={{ marginTop: 0 }}>{tableTitle}</h3>}
+          {tableSubtitle && <h4 style={{ marginTop: 0, color: '#888', fontWeight: 400 }}>{tableSubtitle}</h4>}
+          <div style={{ flex: 1 }}>
+            {/* Table Configurator */}
+            <div className="table-configurator" aria-label="Table Configurator">
+              <div className="config-section">
+                <div className="config-section-title"><FaLayerGroup style={{ marginRight: 6 }} /> Grouping</div>
+                <div className="config-section-helper">Group your data by any column to reveal patterns and trends.</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: 8 }}>
+                  <label htmlFor="group-by-selector" style={{ minWidth: 80 }}>Group By:</label>
+                  <select
+                    id="group-by-selector"
+                    value={groupBy || ""}
+                    onChange={(e) => setGroupBy(e.target.value || null)}
+                    aria-label="Group by column"
+                    style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid var(--color-border)' }}
+                  >
+                    <option value="">None</option>
+                    {cachedColumns.map((col) => (
+                      <option key={String(col.accessor)} value={String(col.accessor)}>
+                        {col.header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="config-section">
+                <div className="config-section-title"><FaLanguage style={{ marginRight: 6 }} /> Language</div>
+                <div className="config-section-helper">Switch the table language for a global audience.</div>
+                <div style={{ marginTop: 8 }}>{showLanguageSwitcher && <LanguageSwitcher />}</div>
+              </div>
+              <div className="config-section">
+                <div className="config-section-title"><FaFilter style={{ marginRight: 6 }} /> Filters</div>
+                <div className="config-section-helper">Narrow down your data with flexible, per-column filters.</div>
+                <div style={{ marginTop: 8 }}>
+                  <span style={{ fontSize: 13, color: '#888' }}>Click the <FaFilter style={{ verticalAlign: 'middle' }} /> icon in any column header to filter that column.</span>
+                  <button onClick={clearFilters} className="clear-filter-button" style={{ marginLeft: 12 }} aria-label="Clear all filters">
+                    <FaBroom style={{ marginRight: 4 }} /> Clear All Filters
+                  </button>
+                </div>
+              </div>
+              <div className="config-section">
+                <div className="config-section-title"><FaColumns style={{ marginRight: 6 }} /> Columns</div>
+                <div className="config-section-helper">Show or hide columns to focus on what matters most.</div>
+                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {cachedColumns.map((col) => (
+                    <label
+                      key={String(col.accessor)}
+                      htmlFor={`toggle-${String(col.accessor)}`}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", background: columnVisibility[String(col.accessor)] ? 'var(--color-accent-light)' : 'transparent', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', border: '1px solid var(--color-border)' }}
+                    >
+                      <input
+                        id={`toggle-${String(col.accessor)}`}
+                        type="checkbox"
+                        checked={columnVisibility[String(col.accessor)]}
+                        onChange={() => toggleColumnVisibility(String(col.accessor))}
+                        aria-label={`Toggle column ${col.header}`}
+                      />
+                      {col.header}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="config-section">
+                <div className="config-section-title"><FaFileExport style={{ marginRight: 6 }} /> Export</div>
+                <div className="config-section-helper">Export your current view for reporting or sharing.</div>
+                <div style={{ marginTop: 8 }}>
+                  {allowExport && (
+                    <button onClick={handleExport} className="export-button" aria-label="Export table data">
+                      <FaFileExport style={{ marginRight: 4 }} /> Export as {exportFileType.toUpperCase()}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="config-section">
+                <div className="config-section-title"><FaBroom style={{ marginRight: 6 }} /> Reset</div>
+                <div className="config-section-helper">Restore the table to its original state.</div>
+                <div style={{ marginTop: 8 }}>
+                  <button onClick={clearHeaderCache} className="clear-cache-button" aria-label="Clear header cache">
+                    <FaBroom style={{ marginRight: 4 }} /> Clear Header Cache
+                  </button>
+                </div>
+              </div>
             </div>
-          ) : enableVirtualization ? (
-            draggableRows ? (
-              <DndContext
-                key={id}
-                id={id}
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
+          </div>
+        </aside>
+        {/* Main Content: Table */}
+        <main className="smart-table-main-content" aria-label="Table Area">
+          <div className="smart-table-main"
+            style={enableVirtualization ? { height: `${rowsPerPage * 20}px` } : {}}
+          >
+            {loading ? (
+              <div className="table-loading-spinner" style={{ textAlign: 'center', padding: 40 }}>
+                <div className="spinner" style={{ width: 40, height: 40, border: '4px solid #eee', borderTop: '4px solid #888', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+                <div style={{ marginTop: 12, color: '#888' }}>Loading...</div>
+              </div>
+            ) : enableVirtualization ? (
+              draggableRows ? (
+                <DndContext
+                  key={id}
+                  id={id}
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <TableVirtuoso
+                    key={`virtuoso-${rowsPerPage}`}
+                    style={{ width: '100%' }}
+                    data={paginatedData}
+                    totalCount={paginatedData.length}
+                    initialItemCount={paginatedData.length}
+                    fixedHeaderContent={renderHeader}
+                    itemContent={(index) => renderRow(index)}
+                    components={{
+                      Table: ({ children, style }) => (
+                        <table
+                          className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}
+                          style={{ ...style, display: 'table', width: '100%' }}
+                        >
+                          {children}
+                        </table>
+                      ),
+                      TableHead: ({ children, ...props }) => (
+                        <thead {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-header-group' }}>
+                          {children}
+                        </thead>
+                      ),
+                      TableBody: ({ children, ...props }) => (
+                        <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
+                          <SortableContext
+                            id={`sortable-rows-${id}`}
+                            items={paginatedData.map((row) => row.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {children}
+                          </SortableContext>
+                        </tbody>
+                      ),
+                      TableRow: ({ children }) => children,
+                    }}
+                  />
+                </DndContext>
+              ) : (
                 <TableVirtuoso
                   key={`virtuoso-${rowsPerPage}`}
                   style={{ width: '100%' }}
-                  data={paginatedData}
-                  totalCount={paginatedData.length}
-                  initialItemCount={paginatedData.length}
+                  data={groupedData ? [] : paginatedData}
+                  totalCount={groupedData ? 0 : paginatedData.length}
+                  initialItemCount={groupedData ? 0 : paginatedData.length}
                   fixedHeaderContent={renderHeader}
                   itemContent={(index) => renderRow(index)}
                   components={{
@@ -811,155 +856,127 @@ export function Table<T extends { id: string }>({
                     ),
                     TableBody: ({ children, ...props }) => (
                       <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
-                        <SortableContext
-                          id={`sortable-rows-${id}`}
-                          items={paginatedData.map((row) => row.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {children}
-                        </SortableContext>
+                        {groupedData ? (
+                          Object.entries(groupedData).map(([group, rows]) => (
+                            <React.Fragment key={group}>
+                              <tr>
+                                <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0) + (rowActions ? 1 : 0)}>
+                                  <strong>{group}</strong>
+                                </td>
+                              </tr>
+                              {rows.map((row, index) => renderRow(index))}
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          children
+                        )}
                       </tbody>
                     ),
                     TableRow: ({ children }) => children,
                   }}
                 />
-              </DndContext>
+              )
             ) : (
-              <TableVirtuoso
-                key={`virtuoso-${rowsPerPage}`}
-                style={{ width: '100%' }}
-                data={groupedData ? [] : paginatedData}
-                totalCount={groupedData ? 0 : paginatedData.length}
-                initialItemCount={groupedData ? 0 : paginatedData.length}
-                fixedHeaderContent={renderHeader}
-                itemContent={(index) => renderRow(index)}
-                components={{
-                  Table: ({ children, style }) => (
-                    <table
-                      className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}
-                      style={{ ...style, display: 'table', width: '100%' }}
+              <DndContext
+                key={id}
+                id={id}
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
+                  <thead style={{ display: 'table-header-group' }}>
+                    {renderHeader()}
+                  </thead>
+                  <tbody style={{ display: 'table-row-group' }}>
+                    <SortableContext
+                      id={`sortable-rows-${id}`}
+                      items={paginatedData.map((row) => row.id)}
+                      strategy={verticalListSortingStrategy}
+                      disabled={!draggableRows}
                     >
-                      {children}
-                    </table>
-                  ),
-                  TableHead: ({ children, ...props }) => (
-                    <thead {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-header-group' }}>
-                      {children}
-                    </thead>
-                  ),
-                  TableBody: ({ children, ...props }) => (
-                    <tbody {...(props as React.HTMLAttributes<HTMLTableSectionElement>)} style={{ display: 'table-row-group' }}>
-                      {groupedData ? (
-                        Object.entries(groupedData).map(([group, rows]) => (
-                          <React.Fragment key={group}>
-                            <tr>
-                              <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0) + (rowActions ? 1 : 0)}>
-                                <strong>{group}</strong>
-                              </td>
-                            </tr>
-                            {rows.map((row, index) => renderRow(index))}
-                          </React.Fragment>
-                        ))
-                      ) : (
-                        children
-                      )}
-                    </tbody>
-                  ),
-                  TableRow: ({ children }) => children,
-                }}
-              />
-            )
-          ) : (
-            <DndContext
-              key={id}
-              id={id}
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+                      {renderTableBody()}
+                    </SortableContext>
+                  </tbody>
+                </table>
+              </DndContext>
+            )}
+          </div>
+          {/* Pagination below table */}
+          <div className="smart-table-pagination">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
             >
-              <table className={`smart-table ${stickyHeader ? "sticky-header" : ""}`}>
-                <thead style={{ display: 'table-header-group' }}>
-                  {renderHeader()}
-                </thead>
-                <tbody style={{ display: 'table-row-group' }}>
-                  <SortableContext
-                    id={`sortable-rows-${id}`}
-                    items={paginatedData.map((row) => row.id)}
-                    strategy={verticalListSortingStrategy}
-                    disabled={!draggableRows}
-                  >
-                    {renderTableBody()}
-                  </SortableContext>
-                </tbody>
-              </table>
-            </DndContext>
-          )}
-        </div>
-      )}
-      <div className="smart-table-pagination">
-        <button
-          onClick={() => setCurrentPage(1)}
-          disabled={currentPage === 1}
-        >
-          ⏮ First
-        </button>
-        <button
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-        >
-          ◀ Prev
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-        >
-          Next ▶
-        </button>
-        <button
-          onClick={() => setCurrentPage(totalPages)}
-          disabled={currentPage === totalPages}
-        >
-          Last ⏭
-        </button>
-        <div style={{ marginLeft: 16 }}>
-          <label htmlFor="page-selector">Current page:</label>
-          <select id="page-selector" value={currentPage} onChange={handlePageChange}>
-            {Array.from({ length: Math.ceil(filteredData.length / rowsPerPage) }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginLeft: 16 }}>
-          <label htmlFor="rows-per-page-selector">Rows per page:</label>
-          <select id="rows-per-page-selector" value={rowsPerPage} onChange={handleRowsPerPageChange}>
-            {[5, 10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginLeft: 16 }}>
-          {filteredData.length > 0 && (
-            <span style={{ fontSize: 13, color: '#555' }}>
-              Showing {((currentPage - 1) * rowsPerPage) + 1}
-              -{Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length}
+              ⏮ First
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              ◀ Prev
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
             </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next ▶
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              Last ⏭
+            </button>
+            <div style={{ marginLeft: 16 }}>
+              <label htmlFor="page-selector">Current page:</label>
+              <select id="page-selector" value={currentPage} onChange={handlePageChange}>
+                {Array.from({ length: Math.ceil(filteredData.length / rowsPerPage) }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginLeft: 16 }}>
+              <label htmlFor="rows-per-page-selector">Rows per page:</label>
+              <select id="rows-per-page-selector" value={rowsPerPage} onChange={handleRowsPerPageChange}>
+                {[5, 10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginLeft: 16 }}>
+              {filteredData.length > 0 && (
+                <span style={{ fontSize: 13, color: '#555' }}>
+                  Showing {((currentPage - 1) * rowsPerPage) + 1}
+                  -{Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length}
+                </span>
+              )}
+            </div>
+          </div>
+          {filteredData.length === 0 && !loading && (
+            <div className="empty-state">
+              <p>{t('table.noData')}</p>
+            </div>
           )}
-        </div>
+        </main>
       </div>
+      {/* Bottom Panel: Chat Section */}
       {enableChatWithTable && (
-        <ChatBox
-          data={filteredData}
-          aiProvider={aiProvider}
-          apiKey={aiProvider === "openai" ? { openaiApiKey } : { geminiApiKey }}
-          onChat={onChat}
-        />
+        <div className="smart-table-bottom-panel" aria-label="Chat Section">
+          <ChatBox
+            data={filteredData}
+            aiProvider={aiProvider}
+            apiKey={aiProvider === "openai" ? { openaiApiKey } : { geminiApiKey }}
+            onChat={onChat}
+          />
+        </div>
       )}
     </div>
   );
