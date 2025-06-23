@@ -790,3 +790,86 @@
   background: var(--color-accent-light);
   color: var(--color-primary-hover);
 }
+
+.chatbox-markdown {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #fff;
+  word-break: break-word;
+}
+.chatbox-markdown code {
+  background: rgba(0,0,0,0.12);
+  color: #ffe58a;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 13px;
+}
+.chatbox-markdown pre {
+  background: #23272e;
+  color: #fff;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.chatbox-markdown table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+.chatbox-markdown th, .chatbox-markdown td {
+  border: 1px solid #e0e4ea;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+.chatbox-suggestion-chip {
+  background: var(--color-bg-alt);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: 16px;
+  padding: 4px 14px;
+  font-size: 14px;
+  margin: 0 2px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  outline: none;
+}
+.chatbox-suggestion-chip:hover, .chatbox-suggestion-chip:focus-visible {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--color-shadow);
+}
+.chatbox-copy-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+  opacity: 0.7;
+  transition: opacity 0.18s;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.chatbox-copy-btn:hover, .chatbox-copy-btn:focus-visible {
+  opacity: 1;
+  background: rgba(0,0,0,0.08);
+}
+.chatbox-error {
+  background: #e74c3c !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  min-width: 30px;
+  max-width: 320px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  font-size: 15px;
+  margin-right: 6px;
+  margin-left: 0;
+  word-break: break-word;
+}
