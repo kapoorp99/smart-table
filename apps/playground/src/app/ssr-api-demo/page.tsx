@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { SmartTable } from "prakhar-smart-table";
 import type { Column } from "prakhar-smart-table";
@@ -25,12 +26,18 @@ const columns: Column<Person>[] = [
 ];
 
 // Fetch from a real API and map to Person type
-async function fetchPeopleFromAPI({ page, pageSize, sort, filters }) {
+async function fetchPeopleFromAPI(params: {
+  page: number;
+  pageSize: number;
+  sort?: { key: string; direction: 'asc' | 'desc' } | null;
+  filters?: Record<string, any>;
+}): Promise<{ data: Person[]; total: number }> {
+  const { page, pageSize, sort, filters } = params;
   // For demo, use jsonplaceholder and map to Person
   const res = await fetch('https://jsonplaceholder.typicode.com/users');
   const users = await res.json();
   // Map to Person type (mock fields)
-  let people = users.map((u, i) => ({
+  let people: Person[] = users.map((u: any, i: number) => ({
     id: String(u.id),
     name: u.name,
     age: 20 + (i % 15),
@@ -45,7 +52,7 @@ async function fetchPeopleFromAPI({ page, pageSize, sort, filters }) {
     Object.entries(filters).forEach(([key, value]) => {
       if (typeof value === 'string' && value.trim()) {
         people = people.filter(row =>
-          String(row[key]).toLowerCase().includes(value.toLowerCase())
+          String((row as any)[key]).toLowerCase().includes(value.toLowerCase())
         );
       }
     });
@@ -53,8 +60,8 @@ async function fetchPeopleFromAPI({ page, pageSize, sort, filters }) {
   // Apply sorting
   if (sort && sort.key) {
     people.sort((a, b) => {
-      const aVal = a[sort.key];
-      const bVal = b[sort.key];
+      const aVal = (a as any)[sort.key];
+      const bVal = (b as any)[sort.key];
       if (aVal < bVal) return sort.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return sort.direction === 'asc' ? 1 : -1;
       return 0;
