@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { TableVirtuoso } from 'react-virtuoso';
 import "../styles/table.css";
-import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter, FaTimes, FaLayerGroup, FaLanguage, FaColumns, FaFileExport, FaBroom } from "react-icons/fa";
+import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter, FaTimes, FaLayerGroup, FaLanguage, FaColumns, FaFileExport, FaBroom, FaChevronDown, FaChevronRight, FaInfoCircle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { TableProps, Column } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
@@ -679,6 +679,44 @@ export function Table<T extends { id: string }>({
     return paginatedData.map((_, index) => renderRow(index));
   };
 
+  // Collapsible section state (persisted in localStorage)
+  const defaultSections = {
+    grouping: true,
+    language: true,
+    filters: true,
+    columns: true,
+    export: true,
+    reset: true,
+  };
+  const [openSections, setOpenSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem('table-config-sections');
+      return saved ? JSON.parse(saved) : defaultSections;
+    } catch {
+      return defaultSections;
+    }
+  });
+  const toggleSection = (key: keyof typeof defaultSections) => {
+    setOpenSections(prev => {
+      const updated = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('table-config-sections', JSON.stringify(updated));
+      return updated;
+    });
+  };
+  // Status indicators
+  const filtersActive = Object.values(filterValues).some(val => (typeof val === 'string' ? val.trim() : Array.isArray(val) && val.length > 0));
+  const groupingActive = !!groupBy;
+  const hiddenColumns = Object.values(columnVisibility).filter(v => !v).length;
+  // Quick actions for columns
+  const showAllColumns = () => setColumnVisibility(Object.fromEntries(cachedColumns.map(col => [String(col.accessor), true])));
+  const hideAllColumns = () => setColumnVisibility(Object.fromEntries(cachedColumns.map(col => [String(col.accessor), false])));
+  // Tooltip state
+  const [tooltip, setTooltip] = useState<{ text: string, x: number, y: number } | null>(null);
+  const showTooltip = (text: string, e: React.MouseEvent) => {
+    setTooltip({ text, x: e.clientX, y: e.clientY });
+  };
+  const hideTooltip = () => setTooltip(null);
+
   return (
     <div className="smart-table-app-layout">
       {/* Optional: Product-style header */}
@@ -694,84 +732,161 @@ export function Table<T extends { id: string }>({
           <div style={{ flex: 1 }}>
             {/* Table Configurator */}
             <div className="table-configurator" aria-label="Table Configurator">
+              {/* Reset All button at top */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                <button className="clear-cache-button" onClick={() => { clearHeaderCache(); clearFilters(); showAllColumns(); setGroupBy(null); }} aria-label="Reset all settings">
+                  <FaBroom style={{ marginRight: 4 }} /> Reset All
+                </button>
+              </div>
+              {/* Grouping Section */}
               <div className="config-section">
-                <div className="config-section-title"><FaLayerGroup style={{ marginRight: 6 }} /> Grouping</div>
-                <div className="config-section-helper">Group your data by any column to reveal patterns and trends.</div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: 8 }}>
-                  <label htmlFor="group-by-selector" style={{ minWidth: 80 }}>Group By:</label>
-                  <select
-                    id="group-by-selector"
-                    value={groupBy || ""}
-                    onChange={(e) => setGroupBy(e.target.value || null)}
-                    aria-label="Group by column"
-                    style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid var(--color-border)' }}
-                  >
-                    <option value="">None</option>
-                    {cachedColumns.map((col) => (
-                      <option key={String(col.accessor)} value={String(col.accessor)}>
-                        {col.header}
-                      </option>
-                    ))}
-                  </select>
+                <div className="config-section-toggle" onClick={() => toggleSection('grouping')} aria-expanded={openSections.grouping} tabIndex={0} role="button" aria-label="Toggle Grouping Section">
+                  {openSections.grouping ? <FaChevronDown /> : <FaChevronRight />}
+                  <span className="config-section-title"><FaLayerGroup style={{ marginRight: 6 }} /> Grouping</span>
+                  <span className="config-section-info" onMouseEnter={e => showTooltip('Group your data by any column to reveal patterns and trends.', e)} onMouseLeave={hideTooltip}><FaInfoCircle /></span>
+                  {groupingActive && <span className="config-status-indicator" title="Grouping active" style={{ color: 'var(--color-primary)', marginLeft: 8 }}><FaLayerGroup /></span>}
                 </div>
+                {openSections.grouping && (
+                  <div className="config-section-content">
+                    <div className="config-section-helper">Group your data by any column to reveal patterns and trends.</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: 8 }}>
+                      <label htmlFor="group-by-selector" style={{ minWidth: 80 }}>Group By:</label>
+                      <select
+                        id="group-by-selector"
+                        value={groupBy || ""}
+                        onChange={(e) => setGroupBy(e.target.value || null)}
+                        aria-label="Group by column"
+                        style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid var(--color-border)' }}
+                      >
+                        <option value="">None</option>
+                        {cachedColumns.map((col) => (
+                          <option key={String(col.accessor)} value={String(col.accessor)}>
+                            {col.header}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Language Section */}
               <div className="config-section">
-                <div className="config-section-title"><FaLanguage style={{ marginRight: 6 }} /> Language</div>
-                <div className="config-section-helper">Switch the table language for a global audience.</div>
-                <div style={{ marginTop: 8 }}>{showLanguageSwitcher && <LanguageSwitcher />}</div>
-              </div>
-              <div className="config-section">
-                <div className="config-section-title"><FaFilter style={{ marginRight: 6 }} /> Filters</div>
-                <div className="config-section-helper">Narrow down your data with flexible, per-column filters.</div>
-                <div style={{ marginTop: 8 }}>
-                  <span style={{ fontSize: 13, color: '#888' }}>Click the <FaFilter style={{ verticalAlign: 'middle' }} /> icon in any column header to filter that column.</span>
-                  <button onClick={clearFilters} className="clear-filter-button" style={{ marginLeft: 12 }} aria-label="Clear all filters">
-                    <FaBroom style={{ marginRight: 4 }} /> Clear All Filters
-                  </button>
+                <div className="config-section-toggle" onClick={() => toggleSection('language')} aria-expanded={openSections.language} tabIndex={0} role="button" aria-label="Toggle Language Section">
+                  {openSections.language ? <FaChevronDown /> : <FaChevronRight />}
+                  <span className="config-section-title"><FaLanguage style={{ marginRight: 6 }} /> Language</span>
+                  <span className="config-section-info" onMouseEnter={e => showTooltip('Switch the table language for a global audience.', e)} onMouseLeave={hideTooltip}><FaInfoCircle /></span>
                 </div>
+                {openSections.language && (
+                  <div className="config-section-content">
+                    <div className="config-section-helper">Switch the table language for a global audience.</div>
+                    <div style={{ marginTop: 8 }}>{showLanguageSwitcher && <LanguageSwitcher />}</div>
+                  </div>
+                )}
               </div>
+              {/* Filters Section */}
               <div className="config-section">
-                <div className="config-section-title"><FaColumns style={{ marginRight: 6 }} /> Columns</div>
-                <div className="config-section-helper">Show or hide columns to focus on what matters most.</div>
-                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  {cachedColumns.map((col) => (
-                    <label
-                      key={String(col.accessor)}
-                      htmlFor={`toggle-${String(col.accessor)}`}
-                      style={{ display: "flex", alignItems: "center", gap: "6px", background: columnVisibility[String(col.accessor)] ? 'var(--color-accent-light)' : 'transparent', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', border: '1px solid var(--color-border)' }}
-                    >
-                      <input
-                        id={`toggle-${String(col.accessor)}`}
-                        type="checkbox"
-                        checked={columnVisibility[String(col.accessor)]}
-                        onChange={() => toggleColumnVisibility(String(col.accessor))}
-                        aria-label={`Toggle column ${col.header}`}
-                      />
-                      {col.header}
-                    </label>
-                  ))}
+                <div className="config-section-toggle" onClick={() => toggleSection('filters')} aria-expanded={openSections.filters} tabIndex={0} role="button" aria-label="Toggle Filters Section">
+                  {openSections.filters ? <FaChevronDown /> : <FaChevronRight />}
+                  <span className="config-section-title"><FaFilter style={{ marginRight: 6 }} /> Filters</span>
+                  <span className="config-section-info" onMouseEnter={e => showTooltip('Narrow down your data with flexible, per-column filters.', e)} onMouseLeave={hideTooltip}><FaInfoCircle /></span>
+                  {filtersActive && <span className="config-status-indicator" title="Filters active" style={{ color: 'var(--color-primary)', marginLeft: 8 }}><FaFilter /></span>}
                 </div>
+                {openSections.filters && (
+                  <div className="config-section-content">
+                    <div className="config-section-helper">Narrow down your data with flexible, per-column filters.</div>
+                    <div style={{ marginTop: 8 }}>
+                      <span style={{ fontSize: 13, color: '#888' }}>Click the <FaFilter style={{ verticalAlign: 'middle' }} /> icon in any column header to filter that column.</span>
+                      <button onClick={clearFilters} className="clear-filter-button" style={{ marginLeft: 12 }} aria-label="Clear all filters">
+                        <FaBroom style={{ marginRight: 4 }} /> Clear All Filters
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Columns Section */}
               <div className="config-section">
-                <div className="config-section-title"><FaFileExport style={{ marginRight: 6 }} /> Export</div>
-                <div className="config-section-helper">Export your current view for reporting or sharing.</div>
-                <div style={{ marginTop: 8 }}>
-                  {allowExport && (
-                    <button onClick={handleExport} className="export-button" aria-label="Export table data">
-                      <FaFileExport style={{ marginRight: 4 }} /> Export as {exportFileType.toUpperCase()}
-                    </button>
-                  )}
+                <div className="config-section-toggle" onClick={() => toggleSection('columns')} aria-expanded={openSections.columns} tabIndex={0} role="button" aria-label="Toggle Columns Section">
+                  {openSections.columns ? <FaChevronDown /> : <FaChevronRight />}
+                  <span className="config-section-title"><FaColumns style={{ marginRight: 6 }} /> Columns</span>
+                  <span className="config-section-info" onMouseEnter={e => showTooltip('Show or hide columns to focus on what matters most.', e)} onMouseLeave={hideTooltip}><FaInfoCircle /></span>
+                  {hiddenColumns > 0 && <span className="config-status-indicator" title="Some columns hidden" style={{ color: 'var(--color-primary)', marginLeft: 8 }}><FaEyeSlash /></span>}
                 </div>
+                {openSections.columns && (
+                  <div className="config-section-content">
+                    <div className="config-section-helper">Show or hide columns to focus on what matters most.</div>
+                    <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
+                      <button className="clear-filter-button" onClick={showAllColumns} aria-label="Show all columns"><FaEye style={{ marginRight: 4 }} /> Show All</button>
+                      <button className="clear-filter-button" onClick={hideAllColumns} aria-label="Hide all columns"><FaEyeSlash style={{ marginRight: 4 }} /> Hide All</button>
+                    </div>
+                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                      {cachedColumns.map((col) => (
+                        <label
+                          key={String(col.accessor)}
+                          htmlFor={`toggle-${String(col.accessor)}`}
+                          style={{ display: "flex", alignItems: "center", gap: "6px", background: columnVisibility[String(col.accessor)] ? 'var(--color-accent-light)' : 'transparent', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', border: '1px solid var(--color-border)' }}
+                        >
+                          <input
+                            id={`toggle-${String(col.accessor)}`}
+                            type="checkbox"
+                            checked={columnVisibility[String(col.accessor)]}
+                            onChange={() => toggleColumnVisibility(String(col.accessor))}
+                            aria-label={`Toggle column ${col.header}`}
+                          />
+                          {col.header}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Export Section */}
               <div className="config-section">
-                <div className="config-section-title"><FaBroom style={{ marginRight: 6 }} /> Reset</div>
-                <div className="config-section-helper">Restore the table to its original state.</div>
-                <div style={{ marginTop: 8 }}>
-                  <button onClick={clearHeaderCache} className="clear-cache-button" aria-label="Clear header cache">
-                    <FaBroom style={{ marginRight: 4 }} /> Clear Header Cache
-                  </button>
+                <div className="config-section-toggle" onClick={() => toggleSection('export')} aria-expanded={openSections.export} tabIndex={0} role="button" aria-label="Toggle Export Section">
+                  {openSections.export ? <FaChevronDown /> : <FaChevronRight />}
+                  <span className="config-section-title"><FaFileExport style={{ marginRight: 6 }} /> Export</span>
+                  <span className="config-section-info" onMouseEnter={e => showTooltip('Export your current view for reporting or sharing.', e)} onMouseLeave={hideTooltip}><FaInfoCircle /></span>
                 </div>
+                {openSections.export && (
+                  <div className="config-section-content">
+                    <div className="config-section-helper">Export your current view for reporting or sharing.</div>
+                    <div style={{ marginTop: 8 }}>
+                      {allowExport && (
+                        <button onClick={handleExport} className="export-button" aria-label="Export table data">
+                          <FaFileExport style={{ marginRight: 4 }} /> Export as {exportFileType.toUpperCase()}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Reset Section */}
+              <div className="config-section">
+                <div className="config-section-toggle" onClick={() => toggleSection('reset')} aria-expanded={openSections.reset} tabIndex={0} role="button" aria-label="Toggle Reset Section">
+                  {openSections.reset ? <FaChevronDown /> : <FaChevronRight />}
+                  <span className="config-section-title"><FaBroom style={{ marginRight: 6 }} /> Reset</span>
+                  <span className="config-section-info" onMouseEnter={e => showTooltip('Restore the table to its original state.', e)} onMouseLeave={hideTooltip}><FaInfoCircle /></span>
+                </div>
+                {openSections.reset && (
+                  <div className="config-section-content">
+                    <div className="config-section-helper">Restore the table to its original state.</div>
+                    <div style={{ marginTop: 8 }}>
+                      <button onClick={clearHeaderCache} className="clear-cache-button" aria-label="Clear header cache">
+                        <FaBroom style={{ marginRight: 4 }} /> Clear Header Cache
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Tooltip for info icons */}
+              {tooltip && (
+                <div
+                  className="smart-table-tooltip visible"
+                  style={{ left: tooltip.x + 12, top: tooltip.y - 8, position: 'fixed', pointerEvents: 'none' }}
+                  role="tooltip"
+                >
+                  {tooltip.text}
+                </div>
+              )}
             </div>
           </div>
         </aside>

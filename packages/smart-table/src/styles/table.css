@@ -555,3 +555,82 @@
     padding: 0.2rem 0.1rem;
   }
 }
+
+.config-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  padding: 0.2rem 0.1rem 0.2rem 0;
+  border-radius: 6px;
+  transition: background 0.18s;
+  outline: none;
+}
+.config-section-toggle:focus-visible {
+  background: var(--color-accent-light);
+}
+.config-section-toggle svg {
+  font-size: 1.1em;
+}
+.config-section-info {
+  margin-left: 6px;
+  color: #bfc7d1;
+  font-size: 1.1em;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  transition: color 0.18s;
+}
+.config-section-info:hover {
+  color: var(--color-primary);
+}
+.config-status-indicator {
+  margin-left: 4px;
+  font-size: 1.1em;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  animation: status-pop 0.25s cubic-bezier(.4,0,.2,1);
+}
+@keyframes status-pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.config-section-content {
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(.4,0,.2,1), opacity 0.18s;
+  opacity: 1;
+  margin-top: 0.2rem;
+}
+.config-section:not(:has(.config-section-content)) {
+  margin-bottom: 0.5rem;
+}
+.config-section-content[aria-hidden="true"] {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.clear-filter-button {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 5px 10px;
+  font-size: 0.97rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.clear-filter-button:hover, .clear-filter-button:focus-visible {
+  background: var(--color-accent-light);
+  color: var(--color-primary-hover);
+}
