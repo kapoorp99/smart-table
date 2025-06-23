@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { TableVirtuoso } from 'react-virtuoso';
 import "../styles/table.css";
-import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter, FaTimes } from "react-icons/fa";
+import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter, FaTimes, FaLayerGroup, FaLanguage, FaColumns, FaFileExport, FaBroom } from "react-icons/fa";
 import { TableProps, Column } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
@@ -684,53 +684,85 @@ export function Table<T extends { id: string }>({
       {tableTitle && <h3>{tableTitle}</h3>}
       {tableSubtitle && <h4>{tableSubtitle}</h4>}
 
-      <div className="table-configurator">
-        <h4>Table Configurator</h4>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <label htmlFor="group-by-selector">Group By:</label>
-          <select
-            id="group-by-selector"
-            value={groupBy || ""}
-            onChange={(e) => setGroupBy(e.target.value || null)}
-          >
-            <option value="">None</option>
-            {cachedColumns.map((col) => (
-              <option key={String(col.accessor)} value={String(col.accessor)}>
-                {col.header}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          {showLanguageSwitcher && <LanguageSwitcher />}
-        </div>
-        <div>
-          {/* Removed static filter panel button */}
-        </div>
-        {cachedColumns.map((col) => (
-          <div key={String(col.accessor)}>
-            <label
-              htmlFor={`toggle-${String(col.accessor)}`}
-              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+      <div className="table-configurator" aria-label="Table Configurator">
+        <div className="config-section">
+          <div className="config-section-title"><FaLayerGroup style={{ marginRight: 6 }} /> Grouping</div>
+          <div className="config-section-helper">Group your data by any column to reveal patterns and trends.</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: 8 }}>
+            <label htmlFor="group-by-selector" style={{ minWidth: 80 }}>Group By:</label>
+            <select
+              id="group-by-selector"
+              value={groupBy || ""}
+              onChange={(e) => setGroupBy(e.target.value || null)}
+              aria-label="Group by column"
+              style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid var(--color-border)' }}
             >
-              <input
-                id={`toggle-${String(col.accessor)}`}
-                type="checkbox"
-                checked={columnVisibility[String(col.accessor)]}
-                onChange={() => toggleColumnVisibility(String(col.accessor))}
-              />
-              {col.header}
-            </label>
+              <option value="">None</option>
+              {cachedColumns.map((col) => (
+                <option key={String(col.accessor)} value={String(col.accessor)}>
+                  {col.header}
+                </option>
+              ))}
+            </select>
           </div>
-        ))}
-        {allowExport && (
-          <button onClick={handleExport} className="export-button">
-            {t('table.export')} as {exportFileType.toUpperCase()}
-          </button>
-        )}
-        <button onClick={clearHeaderCache} className="clear-cache-button">
-          Clear Header Cache
-        </button>
+        </div>
+        <div className="config-section">
+          <div className="config-section-title"><FaLanguage style={{ marginRight: 6 }} /> Language</div>
+          <div className="config-section-helper">Switch the table language for a global audience.</div>
+          <div style={{ marginTop: 8 }}>{showLanguageSwitcher && <LanguageSwitcher />}</div>
+        </div>
+        <div className="config-section">
+          <div className="config-section-title"><FaFilter style={{ marginRight: 6 }} /> Filters</div>
+          <div className="config-section-helper">Narrow down your data with flexible, per-column filters.</div>
+          <div style={{ marginTop: 8 }}>
+            <span style={{ fontSize: 13, color: '#888' }}>Click the <FaFilter style={{ verticalAlign: 'middle' }} /> icon in any column header to filter that column.</span>
+            <button onClick={clearFilters} className="clear-filter-button" style={{ marginLeft: 12 }} aria-label="Clear all filters">
+              <FaBroom style={{ marginRight: 4 }} /> Clear All Filters
+            </button>
+          </div>
+        </div>
+        <div className="config-section">
+          <div className="config-section-title"><FaColumns style={{ marginRight: 6 }} /> Columns</div>
+          <div className="config-section-helper">Show or hide columns to focus on what matters most.</div>
+          <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            {cachedColumns.map((col) => (
+              <label
+                key={String(col.accessor)}
+                htmlFor={`toggle-${String(col.accessor)}`}
+                style={{ display: "flex", alignItems: "center", gap: "6px", background: columnVisibility[String(col.accessor)] ? 'var(--color-accent-light)' : 'transparent', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', border: '1px solid var(--color-border)' }}
+              >
+                <input
+                  id={`toggle-${String(col.accessor)}`}
+                  type="checkbox"
+                  checked={columnVisibility[String(col.accessor)]}
+                  onChange={() => toggleColumnVisibility(String(col.accessor))}
+                  aria-label={`Toggle column ${col.header}`}
+                />
+                {col.header}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="config-section">
+          <div className="config-section-title"><FaFileExport style={{ marginRight: 6 }} /> Export</div>
+          <div className="config-section-helper">Export your current view for reporting or sharing.</div>
+          <div style={{ marginTop: 8 }}>
+            {allowExport && (
+              <button onClick={handleExport} className="export-button" aria-label="Export table data">
+                <FaFileExport style={{ marginRight: 4 }} /> Export as {exportFileType.toUpperCase()}
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="config-section">
+          <div className="config-section-title"><FaBroom style={{ marginRight: 6 }} /> Reset</div>
+          <div className="config-section-helper">Restore the table to its original state.</div>
+          <div style={{ marginTop: 8 }}>
+            <button onClick={clearHeaderCache} className="clear-cache-button" aria-label="Clear header cache">
+              <FaBroom style={{ marginRight: 4 }} /> Clear Header Cache
+            </button>
+          </div>
+        </div>
       </div>
 
       {filteredData.length === 0 && !loading ? (
