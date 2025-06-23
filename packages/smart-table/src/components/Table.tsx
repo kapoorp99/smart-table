@@ -48,6 +48,8 @@ export function Table<T extends { id: string }>({
   cacheKey, // New prop
   loading = false,
   rowActions,
+  serverSide = false,
+  fetchData,
 }: TableProps<T> & { loading?: boolean; rowActions?: (row: T) => React.ReactNode }) {
   const { t } = useTranslation();
   const id = useId();
@@ -270,10 +272,47 @@ export function Table<T extends { id: string }>({
     [orderedData, currentPage, rowsPerPage]
   );
 
+  // SSR/server-side data state
+  const [serverData, setServerData] = useState<T[]>([]);
+  const [serverTotal, setServerTotal] = useState(0);
+  const [serverLoading, setServerLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  // Fetch server data if serverSide
+  useEffect(() => {
+    if (!serverSide || !fetchData) return;
+    setServerLoading(true);
+    setServerError(null);
+    fetchData({
+      page: currentPage,
+      pageSize: rowsPerPage,
+      sort: sortConfig ? { key: String(sortConfig.key), direction: sortConfig.direction } : undefined,
+      filters: filterValues,
+    })
+      .then(res => {
+        setServerData(res.data);
+        setServerTotal(res.total);
+      })
+      .catch(err => {
+        setServerError(err?.message || 'Failed to fetch data.');
+        setServerData([]);
+        setServerTotal(0);
+      })
+      .finally(() => setServerLoading(false));
+  }, [serverSide, fetchData, currentPage, rowsPerPage, sortConfig, JSON.stringify(filterValues)]);
+
+  // Use server data if serverSide, else client-side
+  const effectiveData = serverSide ? serverData : data;
+  const effectiveTotal = serverSide ? serverTotal : filteredData.length;
+  const effectiveLoading = loading || (serverSide && serverLoading);
+  const effectiveError = serverSide ? serverError : null;
+
+  // For SSR, skip client-side filtering/sorting/pagination
   const paginatedData = React.useMemo(() => {
+    if (serverSide) return effectiveData;
     if (draggableRows || !sortConfig) return currentPageData;
     return getSortedData(currentPageData, sortConfig);
-  }, [currentPageData, sortConfig, draggableRows, rowsPerPage]);
+  }, [serverSide, effectiveData, currentPageData, sortConfig, draggableRows, rowsPerPage]);
 
   const updatedColumns = React.useMemo(() => {
     return cachedColumns.filter((col) => columnVisibility[String(col.accessor)]).sort((a, b) => {
@@ -298,7 +337,7 @@ export function Table<T extends { id: string }>({
     });
   };
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages = Math.ceil(effectiveTotal / rowsPerPage);
 
   const toggleColumnVisibility = (key: string) => {
     setColumnVisibility((prev) => ({
@@ -331,7 +370,7 @@ export function Table<T extends { id: string }>({
 
   const handleExport = () => {
     const visibleColumns = updatedColumns.map(col => String(col.accessor));
-    const exportData = filteredData.map(row => {
+    const exportData = paginatedData.map(row => {
       const rowData: any = {};
       visibleColumns.forEach(col => {
         rowData[col] = row[col];
@@ -652,7 +691,7 @@ export function Table<T extends { id: string }>({
 
   // Render table body for non-virtualized mode
   const renderTableBody = () => {
-    if (loading) {
+    if (effectiveLoading) {
       // Show skeleton rows
       return Array.from({ length: rowsPerPage }).map((_, idx) => (
         <tr key={`skeleton-${idx}`}>
@@ -895,10 +934,22 @@ export function Table<T extends { id: string }>({
           <div className="smart-table-main"
             style={enableVirtualization ? { height: `${rowsPerPage * 20}px` } : {}}
           >
-            {loading ? (
+            {effectiveLoading ? (
               <div className="table-loading-spinner" style={{ textAlign: 'center', padding: 40 }}>
                 <div className="spinner" style={{ width: 40, height: 40, border: '4px solid #eee', borderTop: '4px solid #888', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
                 <div style={{ marginTop: 12, color: '#888' }}>Loading...</div>
+              </div>
+            ) : effectiveError ? (
+              <div className="empty-state" style={{ color: '#e74c3c' }}>
+                <p>{effectiveError}</p>
+                {serverSide && (
+                  <button onClick={() => fetchData && fetchData({
+                    page: currentPage,
+                    pageSize: rowsPerPage,
+                    sort: sortConfig ? { key: String(sortConfig.key), direction: sortConfig.direction } : undefined,
+                    filters: filterValues,
+                  })} style={{ marginTop: 10, padding: '6px 16px', borderRadius: 6, border: '1px solid #e0e4ea', background: '#fff', color: 'var(--color-primary)', cursor: 'pointer' }}>Retry</button>
+                )}
               </div>
             ) : enableVirtualization ? (
               draggableRows ? (
@@ -1075,7 +1126,7 @@ export function Table<T extends { id: string }>({
               )}
             </div>
           </div>
-          {filteredData.length === 0 && !loading && (
+          {effectiveData.length === 0 && !effectiveLoading && !effectiveError && (
             <div className="empty-state">
               <p>{t('table.noData')}</p>
             </div>
@@ -1086,7 +1137,7 @@ export function Table<T extends { id: string }>({
       {enableChatWithTable && (
         <div className="smart-table-bottom-panel" aria-label="Chat Section">
           <ChatBox
-            data={filteredData}
+            data={paginatedData}
             aiProvider={aiProvider}
             apiKey={aiProvider === "openai" ? { openaiApiKey } : { geminiApiKey }}
             onChat={onChat}
