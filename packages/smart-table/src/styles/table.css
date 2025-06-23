@@ -1,3 +1,22 @@
+/* --- Enterprise Table Theme: CSS Variables --- */
+:root {
+  --color-bg: #fff;
+  --color-bg-alt: #f7f9fa;
+  --color-bg-highlight: #f0f4ff;
+  --color-border: #e0e4ea;
+  --color-border-strong: #bfc7d1;
+  --color-primary: #2563eb;
+  --color-primary-hover: #174ea6;
+  --color-accent: #ffe58a;
+  --color-accent-light: #fffbe6;
+  --color-text: #222;
+  --color-text-light: #666;
+  --color-disabled: #cbd5e1;
+  --color-shadow: rgba(0,0,0,0.07);
+  --radius: 8px;
+  --transition: 0.18s cubic-bezier(.4,0,.2,1);
+}
+
 .smart-table-container {
   width: 100%;
   max-width: 100%;
@@ -5,54 +24,60 @@
   overflow-y: hidden;
   margin: 0 auto;
   padding: 0.5rem;
-  border-radius: 8px;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
-  background-color: #fff;
-  border: 2px solid #e2d784;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 12px var(--color-shadow);
+  background-color: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  transition: box-shadow var(--transition), border-color var(--transition);
 }
 .smart-table-main {
-  height: 300px;
+  min-height: 200px;
+  max-height: 60vh;
   overflow-y: auto;
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
 }
 
 /* Root table layout */
 .smart-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 0.95rem;
-  background-color: #fffef7;
-  color: #333;
+  font-size: 1rem;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   table-layout: fixed;
+  transition: background var(--transition);
 }
 
 .smart-table th,
 .smart-table td {
   min-width: 120px;
-  width: 120px; /* Fix width to keep layout stable */
+  width: 120px;
+  box-sizing: border-box;
+  transition: background var(--transition), color var(--transition);
 }
 
 /* Table headers */
 .smart-table thead th {
-  background-color: #fff6cc;
+  background-color: var(--color-bg-alt);
   font-weight: 600;
   text-align: left;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2d784;
+  border-bottom: 2px solid var(--color-border);
   position: relative;
+  z-index: 2;
+  user-select: none;
 }
 
 /* Sticky header */
-.smart-table thead tr {
-  background-color: #fff;
-}
-
 .smart-table.sticky-header thead th {
   position: sticky;
   top: 0;
   z-index: 5;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow);
 }
 
 /* Frozen (sticky left) columns */
@@ -60,43 +85,47 @@
 .smart-table td.freeze {
   position: sticky;
   left: 0;
-  background-color: #fffdf0;
-  z-index: 1;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  background-color: var(--color-bg-highlight);
+  z-index: 3;
+  box-shadow: 2px 0 5px var(--color-shadow);
 }
 
 /* Table body rows */
 .smart-table tbody td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f0eac1;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
 /* Striped rows */
 .smart-table tbody tr:nth-child(even) {
-  background-color: #fffbeb;
+  background-color: var(--color-bg-alt);
 }
 
 /* Hover effect */
 .smart-table tbody tr:hover {
-  background-color: #fff6cc;
+  background-color: var(--color-bg-highlight);
+  transition: background var(--transition);
 }
 
 /* Sorting icon container */
 .smart-table .sortable {
   cursor: pointer;
   user-select: none;
+  color: var(--color-primary);
+  transition: color var(--transition);
 }
 
 /* Arrow styles */
 .smart-table .sort-icon {
-  font-size: 0.75rem;
-  opacity: 0.4;
-  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  transition: all var(--transition);
 }
 
 .smart-table .sort-icon.active {
   opacity: 1;
-  color: #b58e00;
+  color: var(--color-primary);
 }
 
 /* Pagination container */
@@ -111,46 +140,52 @@
 
 /* Pagination buttons */
 .smart-table-pagination button {
-  padding: 0.45rem 0.75rem;
-  font-size: 0.85rem;
-  border: 1px solid #e0c766;
-  background: #ffe58a;
-  color: #5a4b00;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-accent);
+  color: var(--color-text);
   cursor: pointer;
   border-radius: 6px;
-  transition:
-    background 0.2s,
-    color 0.2s;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  outline: none;
 }
 
-.smart-table-pagination button:hover {
-  background-color: #ffefb0;
+.smart-table-pagination button:hover,
+.smart-table-pagination button:focus-visible {
+  background-color: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
 .smart-table-pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: var(--color-disabled);
+  color: #fff;
 }
 
 .empty-state {
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--color-text-light);
 }
 
 .table-configurator {
   margin-bottom: 1rem;
   padding: 1rem;
-  border: 1px solid #e2d784;
-  border-radius: 8px;
-  background-color: #fffef7;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-bg-alt);
+  box-shadow: 0 1px 4px var(--color-shadow);
 }
 
 .table-configurator h4 {
   margin-bottom: 0.5rem;
-  font-size: 1rem;
-  color: #333;
+  font-size: 1.1rem;
+  color: var(--color-text);
 }
 
 .table-configurator label {
@@ -158,37 +193,60 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #555;
+  font-size: 0.95rem;
+  color: var(--color-text-light);
 }
 
 .export-button {
   margin-bottom: 10px;
-  padding: 6px 12px;
-  background-color: #007bff;
+  padding: 6px 14px;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: 500;
+  transition: background var(--transition);
 }
-.export-button:hover {
-  background-color: #0056b3;
+.export-button:hover,
+.export-button:focus-visible {
+  background-color: var(--color-primary-hover);
+}
+
+.clear-cache-button,
+.clear-filter-button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  background: var(--color-bg-alt);
+  color: var(--color-text-light);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background var(--transition), color var(--transition);
+}
+.clear-cache-button:hover,
+.clear-filter-button:hover,
+.clear-cache-button:focus-visible,
+.clear-filter-button:focus-visible {
+  background: var(--color-accent-light);
+  color: var(--color-primary);
 }
 
 .smart-table-chat-box {
   width: 400px;
   max-height: 400px;
   overflow-y: auto;
-  background-color: #fffef7;
-  border-radius: 8px;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  background-color: var(--color-bg-alt);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 12px var(--color-shadow);
   padding: 1rem;
 }
 
 .smart-table-response{
-  background-color: #fff6cc;
+  background-color: var(--color-accent-light);
   padding: 0.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   margin-bottom: 0.5rem;
   max-width: 80%;
   word-wrap: break-word;
@@ -196,23 +254,132 @@
   display: inline-block;
   margin-left: 10px;
   margin-right: 10px;
-  font-size: 0.9rem;
-  color: #333;
+  font-size: 0.95rem;
+  color: var(--color-text);
 }
 
+/* --- Filter Popover --- */
+.table-popover {
+  box-shadow: 0 4px 16px var(--color-shadow);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: 1rem;
+  min-width: 200px;
+  z-index: 1000;
+  animation: popover-fade-in 0.18s cubic-bezier(.4,0,.2,1);
+}
+@keyframes popover-fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-/* Responsive tweaks */
+/* --- Skeleton Loading --- */
+.skeleton-cell {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+  border-radius: 4px;
+  min-height: 18px;
+  width: 100%;
+  height: 18px;
+  animation: skeleton-loading 1.2s infinite ease-in-out;
+}
+@keyframes skeleton-loading {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+/* --- Tooltip --- */
+.smart-table-tooltip {
+  position: absolute;
+  z-index: 2000;
+  background: #222;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.92rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  white-space: pre-line;
+  max-width: 260px;
+  box-shadow: 0 2px 8px var(--color-shadow);
+}
+.smart-table-tooltip.visible {
+  opacity: 1;
+}
+
+/* --- Focus/Keyboard Navigation --- */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* --- Responsive tweaks */
+@media (max-width: 900px) {
+  .smart-table-container {
+    padding: 0.25rem;
+  }
+  .smart-table-chat-box {
+    width: 100%;
+    min-width: 0;
+  }
+  .table-configurator {
+    padding: 0.5rem;
+  }
+}
 @media (max-width: 768px) {
   .smart-table {
-    font-size: 0.85rem;
+    font-size: 0.92rem;
   }
-
   .smart-table-pagination {
     flex-direction: column;
     gap: 0.3rem;
   }
-
   .smart-table .sortable {
     font-size: 0.9rem;
   }
+  .smart-table th,
+  .smart-table td {
+    padding: 0.5rem 0.5rem;
+    min-width: 90px;
+    width: 90px;
+  }
+}
+@media (max-width: 600px) {
+  .smart-table-container {
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+  }
+  .smart-table {
+    font-size: 0.88rem;
+  }
+  .smart-table th,
+  .smart-table td {
+    padding: 0.35rem 0.25rem;
+    min-width: 70px;
+    width: 70px;
+  }
+  .table-configurator {
+    padding: 0.25rem;
+    border-radius: 0;
+  }
+}
+
+/* --- Dark Theme (optional, for future use) --- */
+.dark-theme {
+  --color-bg: #181c20;
+  --color-bg-alt: #23272e;
+  --color-bg-highlight: #232a36;
+  --color-border: #2c3440;
+  --color-border-strong: #3a4250;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #2563eb;
+  --color-accent: #2d3748;
+  --color-accent-light: #232a36;
+  --color-text: #f3f4f6;
+  --color-text-light: #bfc7d1;
+  --color-disabled: #374151;
+  --color-shadow: rgba(0,0,0,0.25);
 }

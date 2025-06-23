@@ -1,4 +1,4 @@
-import React, { useId, useState, useMemo, useEffect } from "react";
+import React, { useId, useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import {
   DndContext,
@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { TableVirtuoso } from 'react-virtuoso';
 import "../styles/table.css";
-import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter } from "react-icons/fa";
+import { FaLock, FaLockOpen, FaSort, FaArrowUp, FaArrowDown, FaFilter, FaTimes } from "react-icons/fa";
 import { TableProps, Column } from "../types/tableTypes";
 import { getPaginatedData, getSortedData, groupData } from "../utils/tableUtils";
 import { SortableRow } from "./SortableRow";
@@ -46,7 +46,9 @@ export function Table<T extends { id: string }>({
   language,
   enableVirtualization = true,
   cacheKey, // New prop
-}: TableProps<T>) {
+  loading = false,
+  rowActions,
+}: TableProps<T> & { loading?: boolean; rowActions?: (row: T) => React.ReactNode }) {
   const { t } = useTranslation();
   const id = useId();
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: "asc" | "desc" } | null>(null);
@@ -62,7 +64,6 @@ export function Table<T extends { id: string }>({
   const [rowOrder, setRowOrder] = useState(data.map((row) => row.id));
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [filterValues, setFilterValues] = useState<Record<string, string | string[]>>({});
-  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filterTypes, setFilterTypes] = useState<Record<string, "search" | "checkbox">>(
     () => Object.fromEntries(columns.map((col) => [String(col.accessor), "search"]))
   );
@@ -70,6 +71,53 @@ export function Table<T extends { id: string }>({
   // Header caching logic
   const headerCacheKey = cacheKey || `table-headers-${tableTitle || id}`;
   const [cachedColumns, setCachedColumns] = useState<Column<T>[]>(columns);
+
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    // Try to load from localStorage
+    try {
+      const cached = localStorage.getItem(`${headerCacheKey}-widths`);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    // Default width
+    return Object.fromEntries(columns.map((col) => [String(col.accessor), 120]));
+  });
+
+  // Persist column widths
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${headerCacheKey}-widths`, JSON.stringify(columnWidths));
+    } catch {}
+  }, [columnWidths, headerCacheKey]);
+
+  // Column resize logic
+  const resizingCol = useRef<string | null>(null);
+  const startX = useRef<number>(0);
+  const startWidth = useRef<number>(0);
+
+  const handleResizeStart = (e: React.MouseEvent, key: string) => {
+    resizingCol.current = key;
+    startX.current = e.clientX;
+    startWidth.current = columnWidths[key] || 120;
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('mousemove', handleResizing);
+    window.addEventListener('mouseup', handleResizeEnd);
+  };
+
+  const handleResizing = (e: MouseEvent) => {
+    if (!resizingCol.current) return;
+    const diff = e.clientX - startX.current;
+    setColumnWidths((prev) => {
+      const newWidth = Math.max(60, startWidth.current + diff);
+      return { ...prev, [resizingCol.current!]: newWidth };
+    });
+  };
+
+  const handleResizeEnd = () => {
+    resizingCol.current = null;
+    document.body.style.cursor = '';
+    window.removeEventListener('mousemove', handleResizing);
+    window.removeEventListener('mouseup', handleResizeEnd);
+  };
 
   useEffect(() => {
     // Retrieve cached headers
@@ -333,6 +381,24 @@ export function Table<T extends { id: string }>({
     }
   }, [draggableRows]);
 
+  // Remove showFilterPanel state
+  // Add state for which column's filter popover is open
+  const [openFilterKey, setOpenFilterKey] = useState<string | null>(null);
+  const filterAnchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Helper to close popover on outside click
+  useEffect(() => {
+    if (!openFilterKey) return;
+    const handleClick = (e: MouseEvent) => {
+      const anchor = filterAnchorRefs.current[openFilterKey];
+      if (anchor && !anchor.contains(e.target as Node)) {
+        setOpenFilterKey(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [openFilterKey]);
+
   // Render row component
   const renderRow = (index: number) => {
     const row = paginatedData[index];
@@ -349,14 +415,17 @@ export function Table<T extends { id: string }>({
           isSelected={isRowSelected(row.id)}
           onSelect={() => toggleRowSelection(row.id)}
           style={{ display: 'table-row' }}
-        />
+          columnWidths={columnWidths}
+        >
+          {rowActions && <td style={{ minWidth: 80 }}>{rowActions(row)}</td>}
+        </SortableRow>
       );
     }
 
     return (
       <tr key={row.id} style={{ display: 'table-row' }}>
         {selectableRows && (
-          <td>
+          <td style={{ width: 40, minWidth: 40 }}>
             <input
               type="checkbox"
               checked={isRowSelected(row.id)}
@@ -366,14 +435,22 @@ export function Table<T extends { id: string }>({
         )}
         {updatedColumns.map((col, colIndex) => {
           const isFrozen = frozenCols.has(col.accessor);
+          const key = String(col.accessor);
+          const filterable = col.filterable;
           return (
             <td
-              key={String(col.accessor)}
+              key={key}
               className={isFrozen ? "freeze" : ""}
               style={{
                 left: isFrozen ? `${colIndex * 120}px` : undefined,
                 zIndex: isFrozen ? 2 : 0,
                 position: isFrozen ? 'sticky' : undefined,
+                width: columnWidths[key],
+                minWidth: 60,
+                maxWidth: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {col.render
@@ -382,6 +459,7 @@ export function Table<T extends { id: string }>({
             </td>
           );
         })}
+        {rowActions && <td style={{ minWidth: 80 }}>{rowActions(row)}</td>}
       </tr>
     );
   };
@@ -390,7 +468,7 @@ export function Table<T extends { id: string }>({
   const renderHeader = () => (
     <tr>
       {selectableRows && (
-        <th>
+        <th style={{ width: 40, minWidth: 40 }}>
           <input
             type="checkbox"
             onChange={toggleSelectAll}
@@ -405,12 +483,14 @@ export function Table<T extends { id: string }>({
           />
         </th>
       )}
-      {draggableRows && <th />}
+      {draggableRows && <th style={{ width: 40, minWidth: 40 }} />}
       {updatedColumns.map((col, index) => {
         const isFrozen = frozenCols.has(col.accessor);
+        const key = String(col.accessor);
+        const filterable = col.filterable;
         return (
           <th
-            key={String(col.accessor)}
+            key={key}
             onClick={(!draggableRows && col.sortable) ? () => requestSort(col.accessor) : undefined}
             className={`${isFrozen ? "freeze" : ""} ${!draggableRows && col.sortable ? "sortable" : ""}`}
             style={{
@@ -419,10 +499,16 @@ export function Table<T extends { id: string }>({
               zIndex: isFrozen ? 3 : 1,
               background: stickyHeader ? 'white' : undefined,
               top: stickyHeader ? 0 : undefined,
+              width: columnWidths[key],
+              minWidth: 60,
+              maxWidth: 600,
+              userSelect: 'none',
+              paddingRight: 0,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {col.header}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", position: 'relative' }}>
+              <span style={{ flex: 1 }}>{col.header}</span>
+              {/* Sort icons */}
               {!draggableRows && col.sortable && (
                 sortConfig ? (
                   <span style={{ cursor: "pointer" }} onClick={() => requestSort(col.accessor)}>
@@ -435,6 +521,100 @@ export function Table<T extends { id: string }>({
                   </span>
                 )
               )}
+              {/* Filter icon */}
+              {filterable && (
+                <div
+                  ref={el => { filterAnchorRefs.current[key] = el; }}
+                  style={{ display: 'inline-block', position: 'relative' }}
+                >
+                  <span
+                    style={{ cursor: 'pointer', color: filterValues[key] ? '#007bff' : '#888' }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setOpenFilterKey(openFilterKey === key ? null : key);
+                    }}
+                    title="Filter column"
+                  >
+                    <FaFilter />
+                  </span>
+                  {openFilterKey === key && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        zIndex: 1000,
+                        background: 'white',
+                        border: '1px solid #ccc',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        padding: 12,
+                        minWidth: 180,
+                        marginTop: 4,
+                        borderRadius: 6,
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <strong>Filter</strong>
+                        <span style={{ cursor: 'pointer', color: '#888' }} onClick={() => setOpenFilterKey(null)}><FaTimes /></span>
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <select
+                          value={filterTypes[key]}
+                          onChange={e => handleFilterTypeChange(key, e.target.value as "search" | "checkbox")}
+                          style={{ width: '100%', marginBottom: 6 }}
+                        >
+                          <option value="search">Search Filter</option>
+                          <option value="checkbox">Checkbox Filter</option>
+                        </select>
+                        {filterTypes[key] === "search" ? (
+                          <input
+                            type="text"
+                            value={typeof filterValues[key] === "string" ? filterValues[key] : ""}
+                            onChange={e => handleFilterChange(key, e.target.value)}
+                            placeholder={`Filter by ${col.header}`}
+                            style={{ width: '100%', padding: '5px' }}
+                          />
+                        ) : (
+                          <div style={{ maxHeight: 150, overflowY: 'auto', border: '1px solid #eee', padding: 4 }}>
+                            {filterOptions[key]?.map(option => (
+                              <div key={option} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={Array.isArray(filterValues[key]) && filterValues[key].includes(option)}
+                                  onChange={e => {
+                                    const currentValues = Array.isArray(filterValues[key]) ? filterValues[key] : [];
+                                    const newValues = e.target.checked
+                                      ? [...currentValues, option]
+                                      : currentValues.filter(val => val !== option);
+                                    handleFilterChange(key, newValues);
+                                  }}
+                                />
+                                <label>{option}</label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                        <button
+                          onClick={() => handleFilterChange(key, filterTypes[key] === 'search' ? '' : [])}
+                          style={{ fontSize: 12, padding: '2px 8px', borderRadius: 4, border: '1px solid #ccc', background: '#f8f8f8', cursor: 'pointer' }}
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={() => setOpenFilterKey(null)}
+                          style={{ fontSize: 12, padding: '2px 8px', borderRadius: 4, border: '1px solid #007bff', background: '#007bff', color: 'white', cursor: 'pointer' }}
+                        >
+                          OK
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Freeze icon */}
               <span
                 onClick={(e) => {
                   e.stopPropagation();
@@ -444,20 +624,51 @@ export function Table<T extends { id: string }>({
               >
                 {isFrozen ? <FaLock /> : <FaLockOpen />}
               </span>
+              {/* Resize handle */}
+              <span
+                style={{
+                  cursor: 'col-resize',
+                  width: 8,
+                  height: 24,
+                  display: 'inline-block',
+                  position: 'absolute',
+                  right: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 10,
+                  background: 'transparent',
+                }}
+                onMouseDown={(e) => handleResizeStart(e, key)}
+                onClick={e => e.stopPropagation()}
+                title="Resize column"
+              />
             </div>
           </th>
         );
       })}
+      {rowActions && <th style={{ minWidth: 80 }}>Actions</th>}
     </tr>
   );
 
   // Render table body for non-virtualized mode
   const renderTableBody = () => {
+    if (loading) {
+      // Show skeleton rows
+      return Array.from({ length: rowsPerPage }).map((_, idx) => (
+        <tr key={`skeleton-${idx}`}>
+          {selectableRows && <td style={{ width: 40, minWidth: 40 }}><div className="skeleton-cell" /></td>}
+          {updatedColumns.map((col, colIdx) => (
+            <td key={colIdx}><div className="skeleton-cell" /></td>
+          ))}
+          {rowActions && <td style={{ minWidth: 80 }}><div className="skeleton-cell" /></td>}
+        </tr>
+      ));
+    }
     if (groupedData) {
       return Object.entries(groupedData).map(([group, rows]) => (
         <React.Fragment key={group}>
           <tr>
-            <td colSpan={updatedColumns.length + (selectableRows ? 1 : draggableRows ? 1 : 0)}>
+            <td colSpan={updatedColumns.length + (selectableRows ? 1 : draggableRows ? 1 : 0) + (rowActions ? 1 : 0)}>
               <strong>{group}</strong>
             </td>
           </tr>
@@ -494,73 +705,8 @@ export function Table<T extends { id: string }>({
           {showLanguageSwitcher && <LanguageSwitcher />}
         </div>
         <div>
-          <button
-            onClick={() => setShowFilterPanel(!showFilterPanel)}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
-            className="filter-button"
-          >
-            <FaFilter /> {t('table.filters')}
-          </button>
+          {/* Removed static filter panel button */}
         </div>
-        {showFilterPanel && (
-          <div className="filter-panel" style={{ marginTop: "10px", padding: "10px", border: "1px solid #ccc" }}>
-            <h5>Filters</h5>
-            {cachedColumns
-              .filter((col) => col.filterable)
-              .map((col) => {
-                const key = String(col.accessor);
-                const filterType = filterTypes[key];
-                return (
-                  <div key={key} style={{ marginBottom: "10px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
-                      <label htmlFor={`filter-type-${key}`}>{col.header}</label>
-                      <select
-                        id={`filter-type-${key}`}
-                        value={filterType}
-                        onChange={(e) => handleFilterTypeChange(key, e.target.value as "search" | "checkbox")}
-                      >
-                        <option value="search">Search Filter</option>
-                        <option value="checkbox">Checkbox Filter</option>
-                      </select>
-                    </div>
-                    {filterType === "search" ? (
-                      <input
-                        id={`filter-${key}`}
-                        type="text"
-                        value={typeof filterValues[key] === "string" ? filterValues[key] : ""}
-                        onChange={(e) => handleFilterChange(key, e.target.value)}
-                        placeholder={`Filter by ${col.header}`}
-                        style={{ marginLeft: "10px", padding: "5px", width: "100%" }}
-                      />
-                    ) : (
-                      <div style={{ maxHeight: "150px", overflowY: "auto", border: "1px solid #ddd", padding: "5px" }}>
-                        {filterOptions[key]?.map((option) => (
-                          <div key={option} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                            <input
-                              type="checkbox"
-                              id={`checkbox-${key}-${option}`}
-                              checked={Array.isArray(filterValues[key]) && filterValues[key].includes(option)}
-                              onChange={(e) => {
-                                const currentValues = Array.isArray(filterValues[key]) ? filterValues[key] : [];
-                                const newValues = e.target.checked
-                                  ? [...currentValues, option]
-                                  : currentValues.filter((val) => val !== option);
-                                handleFilterChange(key, newValues);
-                              }}
-                            />
-                            <label htmlFor={`checkbox-${key}-${option}`}>{option}</label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            <button onClick={clearFilters} style={{ marginTop: "10px" }} className="clear-filter-button">
-              {t('table.clearFilters')}
-            </button>
-          </div>
-        )}
         {cachedColumns.map((col) => (
           <div key={String(col.accessor)}>
             <label
@@ -587,7 +733,7 @@ export function Table<T extends { id: string }>({
         </button>
       </div>
 
-      {filteredData.length === 0 ? (
+      {filteredData.length === 0 && !loading ? (
         <div className="empty-state">
           <p>{t('table.noData')}</p>
         </div>
@@ -595,7 +741,12 @@ export function Table<T extends { id: string }>({
         <div className="smart-table-main"
           style={enableVirtualization ? { height: `${rowsPerPage * 20}px` } : {}}
         >
-          {enableVirtualization ? (
+          {loading ? (
+            <div className="table-loading-spinner" style={{ textAlign: 'center', padding: 40 }}>
+              <div className="spinner" style={{ width: 40, height: 40, border: '4px solid #eee', borderTop: '4px solid #888', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+              <div style={{ marginTop: 12, color: '#888' }}>Loading...</div>
+            </div>
+          ) : enableVirtualization ? (
             draggableRows ? (
               <DndContext
                 key={id}
@@ -670,7 +821,7 @@ export function Table<T extends { id: string }>({
                         Object.entries(groupedData).map(([group, rows]) => (
                           <React.Fragment key={group}>
                             <tr>
-                              <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0)}>
+                              <td colSpan={updatedColumns.length + (selectableRows ? 1 : 0) + (rowActions ? 1 : 0)}>
                                 <strong>{group}</strong>
                               </td>
                             </tr>
@@ -715,10 +866,16 @@ export function Table<T extends { id: string }>({
       )}
       <div className="smart-table-pagination">
         <button
+          onClick={() => setCurrentPage(1)}
+          disabled={currentPage === 1}
+        >
+          ⏮ First
+        </button>
+        <button
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage === 1}
         >
-          Prev
+          ◀ Prev
         </button>
         <span>
           Page {currentPage} of {totalPages}
@@ -727,9 +884,15 @@ export function Table<T extends { id: string }>({
           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage === totalPages}
         >
-          Next
+          Next ▶
         </button>
-        <div>
+        <button
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage === totalPages}
+        >
+          Last ⏭
+        </button>
+        <div style={{ marginLeft: 16 }}>
           <label htmlFor="page-selector">Current page:</label>
           <select id="page-selector" value={currentPage} onChange={handlePageChange}>
             {Array.from({ length: Math.ceil(filteredData.length / rowsPerPage) }, (_, i) => (
@@ -739,7 +902,7 @@ export function Table<T extends { id: string }>({
             ))}
           </select>
         </div>
-        <div>
+        <div style={{ marginLeft: 16 }}>
           <label htmlFor="rows-per-page-selector">Rows per page:</label>
           <select id="rows-per-page-selector" value={rowsPerPage} onChange={handleRowsPerPageChange}>
             {[5, 10, 20, 50].map((size) => (
@@ -748,6 +911,14 @@ export function Table<T extends { id: string }>({
               </option>
             ))}
           </select>
+        </div>
+        <div style={{ marginLeft: 16 }}>
+          {filteredData.length > 0 && (
+            <span style={{ fontSize: 13, color: '#555' }}>
+              Showing {((currentPage - 1) * rowsPerPage) + 1}
+              -{Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length}
+            </span>
+          )}
         </div>
       </div>
       {enableChatWithTable && (

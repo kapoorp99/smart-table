@@ -51,4 +51,6 @@ export type TableProps<T> = {
   language: string; // Optional language for the table
   enableVirtualization: boolean; // Optional flag to enable virtualization for large datasets
   cacheKey?: string; // Optional cache key for caching data
+  loading?: boolean; // Optional loading state
+  rowActions?: (row: T) => React.ReactNode; // Optional function to render row actions
 };
