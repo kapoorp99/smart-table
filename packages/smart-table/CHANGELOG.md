@@ -1,5 +1,15 @@
 # smart-table
 
+## 6.0.0
+
+### Major Changes
+
+- initial commit
+- updated the readme
+- updated the readme for end users
+- fixed type issues
+- added ssr feature, enhanced the ui
+
 ## 5.0.0
 
 ### Major Changes
