@@ -6,7 +6,7 @@
       "file": true
     },
     "prakhar-smart-table": {
-      "signature": "6967150d1f2f5d442219c11c519e787c",
+      "signature": "d88fa0e122cc601f65f867dc461fac77",
       "pure": true,
       "replaced": "^5.0.0"
     }

@@ -16,6 +16,7 @@
     "react-dom": "^19.0.0",
     "react-i18next": "^15.5.1",
     "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
