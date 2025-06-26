@@ -1,10 +1,10 @@
 'use client';
-
 import React from "react";
 import { SmartTable } from "prakhar-smart-table";
 import type { Column } from "prakhar-smart-table";
 import "prakhar-smart-table/dist/index.css";
 
+// ... Person type and columns definition (reuse from main page) ...
 type Person = {
   id: string;
   name: string;
@@ -199,41 +199,74 @@ const columns: Column<Person>[] = [
   { header: "Salary", accessor: "salary", sortable: true, frozen: true },
 ];
 
-export default function Home() {
-  return (
-    <div 
-    // style={{ padding: "1rem" }}
-    >
+// Simulate server-side data fetching
+async function fetchPeopleData({
+  page,
+  pageSize,
+  sort,
+  filters,
+}: {
+  page: number;
+  pageSize: number;
+  sort?: { key: string; direction: "asc" | "desc" } | null;
+  filters?: Record<string, unknown>;
+}) {
+  await new Promise((res) => setTimeout(res, 600));
+  let filtered = [...peopleData];
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (typeof value === "string" && value.trim()) {
+        filtered = filtered.filter((row) =>
+          String(row[key as keyof Person] ?? "")
+            .toLowerCase()
+            .includes(value.toLowerCase())
+        );
+      }
+    });
+  }
+  if (sort && sort.key) {
+    filtered.sort((a, b) => {
+      const aVal = a[sort.key as keyof Person];
+      const bVal = b[sort.key as keyof Person];
+      if (aVal == null || bVal == null) return 0;
+      if (aVal < bVal) return sort.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sort.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
+  const total = filtered.length;
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const data = filtered.slice(start, end);
+  return { data, total };
+}
 
-      <div style={{
-        // width: "480px",
-        overflowX: "auto",
-        // height: "400px",
-      }}>
-        <SmartTable<Person>
-          data={peopleData}
-          columns={columns}
-          pageSize={10}
-          currentPage={2}
-          // draggableRows={true}
-          tableTitle="Employee Directory"
-          tableSubtitle="List of employees in the company"
-          selectableRows={true}
-          stickyHeader={true}
-          onRowSelectChange={(selectedRows) => {
-            console.log("Selected rows:", selectedRows);
-          }}
-          allowExport={true}
-          exportFileName="employee-directory"
-          exportFileType="xlsx"
-          enableChatWithTable={true}
-          aiProvider="gemini"
-          geminiApiKey={process.env.NEXT_PUBLIC_GEMINI_API_KEY}
-          showLanguageSwitcher={true}
-          language="en"
-          enableVirtualization={false}
-        />
-      </div>
+export default function SSRMockDemo() {
+  return (
+    <div style={{ padding: "2rem" }}>
+      <h2>SSR Table Demo (Mock Data)</h2>
+      <p>This table fetches data from a mock server function, simulating real SSR/API behavior.</p>
+      <SmartTable
+        data={[]}
+        columns={columns}
+        pageSize={10}
+        currentPage={1}
+        serverSide={true}
+        fetchData={fetchPeopleData}
+        tableTitle="Employee Directory (SSR Mock)"
+        tableSubtitle="Server-side data, pagination, sorting, and filtering"
+        selectableRows={true}
+        stickyHeader={true}
+        allowExport={true}
+        exportFileName="employee-directory"
+        exportFileType="xlsx"
+        enableChatWithTable={true}
+        aiProvider="gemini"
+        geminiApiKey={process.env.NEXT_PUBLIC_GEMINI_API_KEY}
+        showLanguageSwitcher={true}
+        language="en"
+        enableVirtualization={false}
+      />
     </div>
   );
-}
+} 

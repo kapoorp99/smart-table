@@ -51,4 +51,20 @@ export type TableProps<T> = {
   language: string; // Optional language for the table
   enableVirtualization: boolean; // Optional flag to enable virtualization for large datasets
   cacheKey?: string; // Optional cache key for caching data
+  loading?: boolean; // Optional loading state
+  rowActions?: (row: T) => React.ReactNode; // Optional function to render row actions
+  /**
+   * If true, the table will fetch data from the server using fetchData instead of using the static data prop.
+   */
+  serverSide?: boolean;
+  /**
+   * Function to fetch data from the server. Receives pagination, sorting, and filter params.
+   * Should return a Promise with { data, total }.
+   */
+  fetchData?: (params: {
+    page: number;
+    pageSize: number;
+    sort?: { key: string; direction: 'asc' | 'desc' } | null;
+    filters?: Record<string, any>;
+  }) => Promise<{ data: T[]; total: number; }>;
 };

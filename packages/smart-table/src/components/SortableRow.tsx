@@ -3,6 +3,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import "../styles/table.css";
+import React from "react";
 
 export function SortableRow<T>({
   row,
@@ -12,7 +13,9 @@ export function SortableRow<T>({
   isSelected = false,
   onSelect,
   style,
-}: {
+  columnWidths,
+  children,
+}: React.PropsWithChildren<{
   row: T;
   columns: any[];
   frozenCols: Set<keyof T>;
@@ -20,7 +23,8 @@ export function SortableRow<T>({
   isSelected?: boolean;
   onSelect?: () => void;
   style: React.CSSProperties;
-}) {
+  columnWidths?: Record<string, number>;
+}>) {
   const {
     attributes,
     listeners,
@@ -62,13 +66,20 @@ export function SortableRow<T>({
       </td>
       {columns.map((col, index) => {
         const isFrozen = frozenCols.has(col.accessor);
+        const key = String(col.accessor);
         return (
           <td
-            key={String(col.accessor)}
+            key={key}
             className={isFrozen ? "freeze" : ""}
             style={{
               left: isFrozen ? `${index * 120}px` : undefined,
               zIndex: isFrozen ? 2 : 0,
+              width: columnWidths ? columnWidths[key] : undefined,
+              minWidth: 60,
+              maxWidth: 600,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {col.render
@@ -77,6 +88,7 @@ export function SortableRow<T>({
           </td>
         );
       })}
+      {children}
     </tr>
   );
 }

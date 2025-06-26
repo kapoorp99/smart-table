@@ -6,8 +6,8 @@
       "file": true
     },
     "prakhar-smart-table": {
-      "signature": "f3b8658c279e7db6eed834e9bf46a48a",
-      "file": true,
+      "signature": "d88fa0e122cc601f65f867dc461fac77",
+      "pure": true,
       "replaced": "^5.0.0"
     }
   }
