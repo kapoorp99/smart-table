@@ -1,3 +1,4 @@
+'use client';
 import React from "react";
 import { SmartTable } from "prakhar-smart-table";
 import type { Column } from "prakhar-smart-table";

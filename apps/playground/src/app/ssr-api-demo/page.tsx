@@ -1,8 +1,10 @@
+'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { SmartTable } from "prakhar-smart-table";
 import type { Column } from "prakhar-smart-table";
 import "prakhar-smart-table/dist/index.css";
+
 
 type Person = {
   id: string;
@@ -16,6 +18,7 @@ type Person = {
 };
 
 const columns: Column<Person>[] = [
+  { header: "ID", accessor: "id", sortable: true, frozen: true, visible: true },
   { header: "Name", accessor: "name", sortable: true, frozen: true, visible: true },
   { header: "Age", accessor: "age", sortable: true },
   { header: "City", accessor: "city", frozen: true, sortable: false, filterable: true },
@@ -36,6 +39,7 @@ async function fetchPeopleFromAPI(params: {
   // For demo, use jsonplaceholder and map to Person
   const res = await fetch('https://jsonplaceholder.typicode.com/users');
   const users = await res.json();
+  console.log("Fetched users:", users);
   // Map to Person type (mock fields)
   let people: Person[] = users.map((u: any, i: number) => ({
     id: String(u.id),
