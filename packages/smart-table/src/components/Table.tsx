@@ -224,11 +224,9 @@ export function Table<T extends { id: string }>({
         return newSet;
       });
     }
-  };
-
-  // Ensure i18n language is set the same on both client and server
+  };  // Ensure i18n language is set the same on both client and server
   useEffect(() => {
-    if (language && i18n.language !== language) {
+    if (language && i18n && typeof i18n.changeLanguage === 'function' && i18n.language !== language) {
       i18n.changeLanguage(language);
     }
   }, [language]);
